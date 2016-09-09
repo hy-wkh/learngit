@@ -1,0 +1,811 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh-cn"><head><script src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/ca-pub-4210569241504288.js"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Linux epoll模型 - venow - 博客园</title>
+<link type="text/css" rel="stylesheet" href="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/blog-common.css">
+<link id="MainCss" type="text/css" rel="stylesheet" href="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/bundle-SimpleBlue.css">
+<link title="RSS" type="application/rss+xml" rel="alternate" href="http://www.cnblogs.com/venow/rss">
+<link title="RSD" type="application/rsd+xml" rel="EditURI" href="http://www.cnblogs.com/venow/rsd.xml">
+<link type="application/wlwmanifest+xml" rel="wlwmanifest" href="http://www.cnblogs.com/venow/wlwmanifest.xml">
+<script src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/analytics.js" async=""></script><script src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/encoder.js" type="text/javascript"></script><script src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/jquery.js" type="text/javascript"></script>  
+<script type="text/javascript">var currentBlogApp = 'venow', cb_enable_mathjax=false;</script>
+<script src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/blog-common.js" type="text/javascript"></script>
+</head>
+<body>
+<a name="top"></a>
+
+<div id="home">
+<div id="header">
+	<div id="blogTitle">
+		
+<!--done-->
+<div class="title"><a id="Header1_HeaderTitle" class="headermaintitle" href="http://www.cnblogs.com/venow/">编程之路</a></div>
+<div class="subtitle">没有伞的孩子，只能不断的往前跑 O_o。。。</div>
+
+
+
+		
+	</div><!--end: blogTitle 博客的标题和副标题 -->
+	<div id="navigator">
+		
+<ul id="navList">
+<li id="nav_sitehome"><a id="MyLinks1_HomeLink" class="menu" href="http://www.cnblogs.com/">博客园</a></li>
+<li id="nav_myhome"><a id="MyLinks1_MyHomeLink" class="menu" href="http://www.cnblogs.com/venow/">首页</a></li>
+<li id="nav_q"><a class="menu" href="http://q.cnblogs.com/">博问</a></li>
+<li id="nav_ing"><a class="menu" href="http://home.cnblogs.com/ing/">闪存</a></li>
+<li id="nav_newpost"><a id="MyLinks1_NewPostLink" class="menu" rel="nofollow" href="http://i.cnblogs.com/EditPosts.aspx?opt=1">新随笔</a></li>
+<li id="nav_contact"><a id="MyLinks1_ContactLink" class="menu" rel="nofollow" href="http://msg.cnblogs.com/send/venow">联系</a></li>
+<li id="nav_rss"><a id="MyLinks1_Syndication" class="menu" href="http://www.cnblogs.com/venow/rss">订阅</a>
+<!--<a id="MyLinks1_XMLLink" class="aHeaderXML" href="http://www.cnblogs.com/venow/rss"><img src="http://www.cnblogs.com/images/xml.gif" alt="订阅" /></a>--></li>
+<li id="nav_admin"><a id="MyLinks1_Admin" class="menu" rel="nofollow" href="http://i.cnblogs.com/">管理</a></li>
+</ul>
+
+		<div class="blogStats">
+			
+			
+<!--done-->
+随笔-118&nbsp;
+文章-1&nbsp;
+评论-74&nbsp;
+
+			
+		</div><!--end: blogStats -->
+	</div><!--end: navigator 博客导航栏 -->
+</div><!--end: header 头部 -->
+<div id="main">
+	<div id="mainContent">
+	<div class="forFlow">
+		
+<div id="post_detail">
+<!--done-->
+<div id="topics">
+	<div class="post">
+		<h1 class="postTitle">
+			<a id="cb_post_title_url" class="postTitle2" href="http://www.cnblogs.com/venow/archive/2012/11/30/2790031.html">Linux epoll模型</a>
+		</h1>
+		<div class="clear"></div>
+		<div class="postBody">
+			<div id="cnblogs_post_body"><p><strong>定义：</strong></p>
+<p><strong>　　</strong>epoll是Linux内核为处理大批句柄而作改进的poll，是Linux下多路复用IO接口
+select/poll的增强版本，它能显著的减少程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率。因为它会复用文件描述符集合来传递结果
+而不是迫使开发者每次等待事件之前都必须重新准备要被侦听的文件描述符集合，另一个原因就是获取事件的时候，它无须遍历整个被侦听的描述符集，只要遍历那
+些被内核IO事件异步唤醒而加入Ready队列的描述符集合就行了。epoll除了提供select\poll那种IO事件的电平触发(Level 
+Triggered)外，还提供了边沿触发(Edge 
+Triggered)，这就使得用户空间程序有可能缓存IO状态，减少epoll_wait/epoll_pwait的调用，提供应用程序的效率。</p>
+<p><strong>工作方式：</strong></p>
+<p><strong>　　LT</strong>(level triggered)：水平触发，缺省方式，同时支持block和no-block 
+socket，在这种做法中，内核告诉我们一个文件描述符是否被就绪了，如果就绪了，你就可以对这个就绪的fd进行IO操作。如果你不作任何操作，内核还
+是会继续通知你的，所以，这种模式编程出错的可能性较小。传统的select\poll都是这种模型的代表。</p>
+<p>　　<strong>ET</strong>(edge-triggered)：边沿触发，高速工作方式，只支持no-block 
+socket。在这种模式下，当描述符从未就绪变为就绪状态时，内核通过epoll告诉你。然后它会假设你知道文件描述符已经就绪，并且不会再为那个描述
+符发送更多的就绪通知，直到你做了某些操作导致那个文件描述符不再为就绪状态了(比如：你在发送、接受或者接受请求，或者发送接受的数据少于一定量时导致
+了一个EWOULDBLOCK错误)。但是请注意，如果一直不对这个fs做IO操作(从而导致它再次变成未就绪状态)，内核不会发送更多的通知。</p>
+<p>　<strong>　区别</strong>：LT事件不会丢弃，而是只要读buffer里面有数据可以让用户读取，则不断的通知你。而ET则只在事件发生之时通知。</p>
+<p><strong>使用方式：</strong></p>
+<p>　　1、<span>int epoll_create(int size)</span></p>
+<p>创建一个epoll句柄，参数size用来告诉内核监听的数目。</p>
+<p>　　2、<span>int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)</span></p>
+<p>epoll事件注册函数，</p>
+<p>　　参数epfd为epoll的句柄；</p>
+<p>　　参数op表示动作，用3个宏来表示：EPOLL_CTL_ADD(注册新的fd到epfd)，EPOLL_CTL_MOD(修改已经注册的fd的监听事件)，EPOLL_CTL_DEL(从epfd删除一个fd)；</p>
+<p>　　参数fd为需要监听的标示符；</p>
+<p>　　参数event告诉内核需要监听的事件，event的结构如下：</p>
+<div class="cnblogs_code">
+<pre><span style="color: #0000ff;">struct</span><span style="color: #000000;"> epoll_event {
+  __uint32_t events;  </span><span style="color: #008000;">/*</span><span style="color: #008000;"> Epoll events </span><span style="color: #008000;">*/</span><span style="color: #000000;">
+  epoll_data_t data;  </span><span style="color: #008000;">/*</span><span style="color: #008000;"> User data variable </span><span style="color: #008000;">*/</span><span style="color: #000000;">
+};</span></pre>
+</div>
+<p>　　其中events可以用以下几个宏的集合：</p>
+<p>　　<span>EPOLLIN ：表示对应的文件描述符可以读（包括对端SOCKET正常关闭）</span></p>
+<p><span>　　EPOLLOUT：表示对应的文件描述符可以写</span></p>
+<p><span>　　EPOLLPRI：表示对应的文件描述符有紧急的数据可读（这里应该表示有带外数据到来）</span></p>
+<p><span>　　</span><span>EPOLLERR：表示对应的文件描述符发生错误</span></p>
+<p><span>　　EPOLLHUP：表示对应的文件描述符被挂断；</span></p>
+<p><span>　　EPOLLET： 将EPOLL设为边缘触发(Edge Triggered)模式，这是相对于水平触发(Level Triggered)来说的</span></p>
+<p><span>　　EPOLLONESHOT：只监听一次事件，当监听完这次事件之后，如果还需要继续监听这个socket的话，需要再次把这个socket加入到EPOLL队列里</span></p>
+<p><span>3、<span>&nbsp;int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout)</span></span></p>
+<p><span><span>　　</span><span>等待事件的产生，类似于select()调用。参数events用来从内核得到事件的集
+合，maxevents告之内核这个events有多大，这个maxevents的值不能大于创建epoll_create()时的size，参数
+timeout是超时时间（毫秒，0会立即返回，-1将不确定，也有说法说是永久阻塞）。该函数返回需要处理的事件数目，如返回0表示已超时。</span></span></p>
+<p><strong>应用举例：</strong></p>
+<p><span><span>　　下面，我引用google code中别人写的一个简单程序来进行说明。svn路径：<a href="http://sechat.googlecode.com/svn/trunk/">http://sechat.googlecode.com/svn/trunk/</a></span></span></p>
+<p><span><span>　　该程序一个简单的聊天室程序，用Linux 
+C++写的，服务器主要是用epoll模型实现，支持高并发，我测试在有10000个客户端连接服务器的时候，server处理时间不到1秒，当然客户端
+只是与服务器连接之后，接受服务器的欢迎消息而已，并没有做其他的通信。虽然程序比较简单，但是在我们考虑服务器高并发时也提供了一个思路。在这个程序
+中，我已经把所有的调试信息和一些与epoll无关的信息干掉，并添加必要的注释，应该很容易理解。</span></span></p>
+<p><span><span>　　程序共包含2个头文件和3个cpp文件。其中3个cpp文件中，每一个cpp文件都是一个应用程序，server.cpp：服务器程序，client.cpp：单个客户端程序，tester.cpp：模拟高并发，开启10000个客户端去连服务器。</span></span></p>
+<p><span><span>　　utils.h头文件，就包含一个设置socket为不阻塞函数，如下：</span></span></p>
+<div class="cnblogs_code">
+<pre><span style="color: #0000ff;">int</span> setnonblocking(<span style="color: #0000ff;">int</span><span style="color: #000000;"> sockfd)
+{
+    CHK(fcntl(sockfd, F_SETFL, fcntl(sockfd, F_GETFD, </span><span style="color: #800080;">0</span>)|<span style="color: #000000;">O_NONBLOCK));
+    </span><span style="color: #0000ff;">return</span> <span style="color: #800080;">0</span><span style="color: #000000;">;
+}</span></pre>
+</div>
+<p>　　local.h头文件，一些常量的定义和函数的声明，如下：</p>
+<div class="cnblogs_code"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre><span style="color: #0000ff;">#define</span> BUF_SIZE 1024                 <span style="color: #008000;">//</span><span style="color: #008000;">默认缓冲区</span>
+<span style="color: #0000ff;">#define</span> SERVER_PORT 44444             <span style="color: #008000;">//</span><span style="color: #008000;">监听端口</span>
+<span style="color: #0000ff;">#define</span> SERVER_HOST "192.168.34.15"   <span style="color: #008000;">//</span><span style="color: #008000;">服务器IP地址</span>
+<span style="color: #0000ff;">#define</span> EPOLL_RUN_TIMEOUT -1          <span style="color: #008000;">//</span><span style="color: #008000;">epoll的超时时间</span>
+<span style="color: #0000ff;">#define</span> EPOLL_SIZE 10000              <span style="color: #008000;">//</span><span style="color: #008000;">epoll监听的客户端的最大数目</span>
+
+<span style="color: #0000ff;">#define</span> STR_WELCOME "Welcome to seChat! You ID is: Client #%d"
+<span style="color: #0000ff;">#define</span> STR_MESSAGE "Client #%d&gt;&gt; %s"
+<span style="color: #0000ff;">#define</span> STR_NOONE_CONNECTED "Noone connected to server except you!"
+<span style="color: #0000ff;">#define</span> CMD_EXIT "EXIT"
+
+<span style="color: #008000;">//</span><span style="color: #008000;">两个有用的宏定义：检查和赋值并且检测</span>
+<span style="color: #0000ff;">#define</span> CHK(eval) if(eval &lt; 0){perror("eval"); exit(-1);}
+<span style="color: #0000ff;">#define</span> CHK2(res, eval) if((res = eval) &lt; 0){perror("eval"); exit(-1);}
+
+<span style="color: #008000;">//</span><span style="color: #008000;">================================================================================================
+</span><span style="color: #008000;">//</span><span style="color: #008000;">函数名：                  setnonblocking
+</span><span style="color: #008000;">//</span><span style="color: #008000;">函数描述：                设置socket为不阻塞
+</span><span style="color: #008000;">//</span><span style="color: #008000;">输入：                    [in] sockfd socket标示符
+</span><span style="color: #008000;">//</span><span style="color: #008000;">输出：                    无
+</span><span style="color: #008000;">//</span><span style="color: #008000;">返回：                    0
+</span><span style="color: #008000;">//</span><span style="color: #008000;">================================================================================================</span>
+<span style="color: #0000ff;">int</span> setnonblocking(<span style="color: #0000ff;">int</span><span style="color: #000000;"> sockfd);<br><br></span><span style="color: #008000;">//</span><span style="color: #008000;">================================================================================================
+</span><span style="color: #008000;">//</span><span style="color: #008000;">函数名：                  handle_message
+</span><span style="color: #008000;">//</span><span style="color: #008000;">函数描述：                处理每个客户端socket
+</span><span style="color: #008000;">//</span><span style="color: #008000;">输入：                    [in] new_fd socket标示符
+</span><span style="color: #008000;">//</span><span style="color: #008000;">输出：                    无
+</span><span style="color: #008000;">//</span><span style="color: #008000;">返回：                    返回从客户端接受的数据的长度
+</span><span style="color: #008000;">//</span><span style="color: #008000;">================================================================================================</span>
+<span style="color: #0000ff;">int</span> handle_message(<span style="color: #0000ff;">int</span> new_fd);</pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<p>　　server.cpp文件，epoll模型就在这里实现，如下：</p>
+<div class="cnblogs_code"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre>#include <span style="color: #800000;">"</span><span style="color: #800000;">local.h</span><span style="color: #800000;">"</span><span style="color: #000000;">
+#include </span><span style="color: #800000;">"</span><span style="color: #800000;">utils.h</span><span style="color: #800000;">"</span>
+
+<span style="color: #0000ff;">using</span> <span style="color: #0000ff;">namespace</span><span style="color: #000000;"> std;
+
+</span><span style="color: #008000;">//</span><span style="color: #008000;"> 存放客户端socket描述符的list</span>
+list&lt;<span style="color: #0000ff;">int</span>&gt;<span style="color: #000000;"> clients_list;
+
+</span><span style="color: #0000ff;">int</span> main(<span style="color: #0000ff;">int</span> argc, <span style="color: #0000ff;">char</span> *<span style="color: #000000;">argv[])
+{
+    </span><span style="color: #0000ff;">int</span> listener;   <span style="color: #008000;">//</span><span style="color: #008000;">监听socket</span>
+    <span style="color: #0000ff;">struct</span><span style="color: #000000;"> sockaddr_in addr, their_addr;  
+    addr.sin_family </span>=<span style="color: #000000;"> PF_INET;
+    addr.sin_port </span>=<span style="color: #000000;"> htons(SERVER_PORT);
+    addr.sin_addr.s_addr </span>=<span style="color: #000000;"> inet_addr(SERVER_HOST);
+    socklen_t socklen;
+    socklen </span>= <span style="color: #0000ff;">sizeof</span>(<span style="color: #0000ff;">struct</span><span style="color: #000000;"> sockaddr_in);
+
+    </span><span style="color: #0000ff;">static</span> <span style="color: #0000ff;">struct</span><span style="color: #000000;"> epoll_event ev, events[EPOLL_SIZE];
+    ev.events </span>= EPOLLIN | EPOLLET;     <span style="color: #008000;">//</span><span style="color: #008000;">对读感兴趣，边沿触发</span>
+
+    <span style="color: #0000ff;">char</span><span style="color: #000000;"> message[BUF_SIZE];
+
+    </span><span style="color: #0000ff;">int</span> epfd;  <span style="color: #008000;">//</span><span style="color: #008000;">epoll描述符</span>
+    clock_t tStart;  <span style="color: #008000;">//</span><span style="color: #008000;">计算程序运行时间</span>
+
+    <span style="color: #0000ff;">int</span><span style="color: #000000;"> client, res, epoll_events_count;
+
+    CHK2(listener, socket(PF_INET, SOCK_STREAM, </span><span style="color: #800080;">0</span>));             <span style="color: #008000;">//</span><span style="color: #008000;">初始化监听socket</span>
+    setnonblocking(listener);                                    <span style="color: #008000;">//</span><span style="color: #008000;">设置监听socket为不阻塞</span>
+    CHK(bind(listener, (<span style="color: #0000ff;">struct</span> sockaddr *)&amp;addr, <span style="color: #0000ff;">sizeof</span>(addr))); <span style="color: #008000;">//</span><span style="color: #008000;">绑定监听socket</span>
+    CHK(listen(listener, <span style="color: #800080;">1</span>));                                    <span style="color: #008000;">//</span><span style="color: #008000;">设置监听</span>
+<span style="color: #000000;">
+    CHK2(epfd,epoll_create(EPOLL_SIZE));                         </span><span style="color: #008000;">//</span><span style="color: #008000;">创建一个epoll描述符，并将监听socket加入epoll</span>
+    ev.data.fd =<span style="color: #000000;"> listener;
+    CHK(epoll_ctl(epfd, EPOLL_CTL_ADD, listener, </span>&amp;<span style="color: #000000;">ev));
+
+    </span><span style="color: #0000ff;">while</span>(<span style="color: #800080;">1</span><span style="color: #000000;">)
+    {
+        CHK2(epoll_events_count,epoll_wait(epfd, events, EPOLL_SIZE, EPOLL_RUN_TIMEOUT));
+        tStart </span>=<span style="color: #000000;"> clock();
+        </span><span style="color: #0000ff;">for</span>(<span style="color: #0000ff;">int</span> i = <span style="color: #800080;">0</span>; i &lt; epoll_events_count ; i++<span style="color: #000000;">)
+        {
+            </span><span style="color: #0000ff;">if</span>(events[i].data.fd == listener)                    <span style="color: #008000;">//</span><span style="color: #008000;">新的连接到来，将连接添加到epoll中，并发送欢迎消息</span>
+<span style="color: #000000;">            {
+                CHK2(client,accept(listener, (</span><span style="color: #0000ff;">struct</span> sockaddr *) &amp;their_addr, &amp;<span style="color: #000000;">socklen));
+                setnonblocking(client);
+                ev.data.fd </span>=<span style="color: #000000;"> client;
+                CHK(epoll_ctl(epfd, EPOLL_CTL_ADD, client, </span>&amp;<span style="color: #000000;">ev));
+
+                clients_list.push_back(client);                  </span><span style="color: #008000;">//</span><span style="color: #008000;"> 添加新的客户端到list</span>
+<span style="color: #000000;">                bzero(message, BUF_SIZE);
+                res </span>=<span style="color: #000000;"> sprintf(message, STR_WELCOME, client);
+                CHK2(res, send(client, message, BUF_SIZE, </span><span style="color: #800080;">0</span><span style="color: #000000;">));
+
+            }</span><span style="color: #0000ff;">else</span><span style="color: #000000;"> 
+            {
+                CHK2(res,handle_message(events[i].data.fd)); </span><span style="color: #008000;">//</span><span style="color: #008000;">注意：这里并没有调用epoll_ctl重新设置socket的事件类型，但还是可以继续收到客户端发送过来的信息</span>
+<span style="color: #000000;">            }
+        }
+        printf(</span><span style="color: #800000;">"</span><span style="color: #800000;">Statistics: %d events handled at: %.2f second(s)\n</span><span style="color: #800000;">"</span>, epoll_events_count, (<span style="color: #0000ff;">double</span>)(clock() - tStart)/<span style="color: #000000;">CLOCKS_PER_SEC);
+    }
+
+    close(listener);
+    close(epfd);
+
+    </span><span style="color: #0000ff;">return</span> <span style="color: #800080;">0</span><span style="color: #000000;">;
+}
+
+</span><span style="color: #0000ff;">int</span> handle_message(<span style="color: #0000ff;">int</span><span style="color: #000000;"> client)  
+{
+    </span><span style="color: #0000ff;">char</span><span style="color: #000000;"> buf[BUF_SIZE], message[BUF_SIZE];
+    bzero(buf, BUF_SIZE);
+    bzero(message, BUF_SIZE);
+
+    </span><span style="color: #0000ff;">int</span><span style="color: #000000;"> len;
+
+    CHK2(len,recv(client, buf, BUF_SIZE, </span><span style="color: #800080;">0</span>));  <span style="color: #008000;">//</span><span style="color: #008000;">接受客户端信息</span>
+
+    <span style="color: #0000ff;">if</span>(len == <span style="color: #800080;">0</span>)   <span style="color: #008000;">//</span><span style="color: #008000;">客户端关闭或出错，关闭socket，并从list移除socket</span>
+<span style="color: #000000;">    {
+        CHK(close(client));
+        clients_list.remove(client);
+    }
+    </span><span style="color: #0000ff;">else</span>          <span style="color: #008000;">//</span><span style="color: #008000;">向客户端发送信息</span>
+<span style="color: #000000;">    { 
+        </span><span style="color: #0000ff;">if</span>(clients_list.size() == <span style="color: #800080;">1</span><span style="color: #000000;">) 
+        { 
+            CHK(send(client, STR_NOONE_CONNECTED, strlen(STR_NOONE_CONNECTED), </span><span style="color: #800080;">0</span><span style="color: #000000;">));
+                </span><span style="color: #0000ff;">return</span><span style="color: #000000;"> len;
+        }
+        
+        sprintf(message, STR_MESSAGE, client, buf);
+        list</span>&lt;<span style="color: #0000ff;">int</span>&gt;<span style="color: #000000;">::iterator it;
+        </span><span style="color: #0000ff;">for</span>(it = clients_list.begin(); it != clients_list.end(); it++<span style="color: #000000;">)
+        {
+           </span><span style="color: #0000ff;">if</span>(*it !=<span style="color: #000000;"> client)
+           { 
+                CHK(send(</span>*it, message, BUF_SIZE, <span style="color: #800080;">0</span><span style="color: #000000;">));
+           }
+        }
+    }
+
+    </span><span style="color: #0000ff;">return</span><span style="color: #000000;"> len;
+}</span></pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<p>　　tester.cpp文件，模拟服务器的高并发，开启10000个客户端去连接服务器，如下：</p>
+<div class="cnblogs_code"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre>#include <span style="color: #800000;">"</span><span style="color: #800000;">local.h</span><span style="color: #800000;">"</span><span style="color: #000000;">
+#include </span><span style="color: #800000;">"</span><span style="color: #800000;">utils.h</span><span style="color: #800000;">"</span>
+
+<span style="color: #0000ff;">using</span> <span style="color: #0000ff;">namespace</span><span style="color: #000000;"> std;
+
+</span><span style="color: #0000ff;">char</span> message[BUF_SIZE];     <span style="color: #008000;">//</span><span style="color: #008000;">接受服务器信息</span>
+list&lt;<span style="color: #0000ff;">int</span>&gt; list_of_clients;  <span style="color: #008000;">//</span><span style="color: #008000;">存放所有客户端</span>
+<span style="color: #0000ff;">int</span><span style="color: #000000;"> res;
+clock_t tStart;
+
+</span><span style="color: #0000ff;">int</span> main(<span style="color: #0000ff;">int</span> argc, <span style="color: #0000ff;">char</span> *<span style="color: #000000;">argv[])
+{
+    </span><span style="color: #0000ff;">int</span><span style="color: #000000;"> sock; 
+    </span><span style="color: #0000ff;">struct</span><span style="color: #000000;"> sockaddr_in addr;
+    addr.sin_family </span>=<span style="color: #000000;"> PF_INET;
+    addr.sin_port </span>=<span style="color: #000000;"> htons(SERVER_PORT);
+    addr.sin_addr.s_addr </span>=<span style="color: #000000;"> inet_addr(SERVER_HOST);
+    
+    tStart </span>=<span style="color: #000000;"> clock();
+
+    </span><span style="color: #0000ff;">for</span>(<span style="color: #0000ff;">int</span> i=<span style="color: #800080;">0</span> ; i&lt;EPOLL_SIZE; i++)  <span style="color: #008000;">//</span><span style="color: #008000;">生成EPOLL_SIZE个客户端，这里是10000个，模拟高并发</span>
+<span style="color: #000000;">    {
+       CHK2(sock,socket(PF_INET, SOCK_STREAM, </span><span style="color: #800080;">0</span><span style="color: #000000;">));
+       CHK(connect(sock, (</span><span style="color: #0000ff;">struct</span> sockaddr *)&amp;addr, <span style="color: #0000ff;">sizeof</span>(addr)) &lt; <span style="color: #800080;">0</span><span style="color: #000000;">);
+       list_of_clients.push_back(sock);
+
+       bzero(</span>&amp;<span style="color: #000000;">message, BUF_SIZE);
+       CHK2(res,recv(sock, message, BUF_SIZE, </span><span style="color: #800080;">0</span><span style="color: #000000;">));
+       printf(</span><span style="color: #800000;">"</span><span style="color: #800000;">%s\n</span><span style="color: #800000;">"</span><span style="color: #000000;">, message);
+    }
+   
+    list</span>&lt;<span style="color: #0000ff;">int</span>&gt;::iterator it;          <span style="color: #008000;">//</span><span style="color: #008000;">移除所有客户端</span>
+    <span style="color: #0000ff;">for</span>(it = list_of_clients.begin(); it != list_of_clients.end() ; it++<span style="color: #000000;">)
+       close(</span>*<span style="color: #000000;">it);
+
+    printf(</span><span style="color: #800000;">"</span><span style="color: #800000;">Test passed at: %.2f second(s)\n</span><span style="color: #800000;">"</span>, (<span style="color: #0000ff;">double</span>)(clock() - tStart)/<span style="color: #000000;">CLOCKS_PER_SEC); 
+    printf(</span><span style="color: #800000;">"</span><span style="color: #800000;">Total server connections was: %d\n</span><span style="color: #800000;">"</span><span style="color: #000000;">, EPOLL_SIZE);
+    
+    </span><span style="color: #0000ff;">return</span> <span style="color: #800080;">0</span><span style="color: #000000;">;
+}</span></pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div></div>
+<p>　　我就不给出程序的执行结果的截图了，不过下面这张截图是代码作者自己测试的，可以看出，并发10000无压力呀&nbsp;</p>
+<p><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/2012113020352662.png" alt=""></p>
+<p>　　单个客户端去连接服务器，client.cpp文件，如下：</p>
+<div class="cnblogs_code"><div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div>
+<pre>#include <span style="color: #800000;">"</span><span style="color: #800000;">local.h</span><span style="color: #800000;">"</span><span style="color: #000000;">
+#include </span><span style="color: #800000;">"</span><span style="color: #800000;">utils.h</span><span style="color: #800000;">"</span>
+
+<span style="color: #0000ff;">using</span> <span style="color: #0000ff;">namespace</span><span style="color: #000000;"> std;
+
+</span><span style="color: #0000ff;">char</span><span style="color: #000000;"> message[BUF_SIZE];
+
+</span><span style="color: #008000;">/*</span><span style="color: #008000;">
+    流程：
+        调用fork产生两个进程，两个进程通过管道进行通信
+        子进程：等待客户输入，并将客户输入的信息通过管道写给父进程
+        父进程：接受服务器的信息并显示，将从子进程接受到的信息发送给服务器
+</span><span style="color: #008000;">*/</span>
+<span style="color: #0000ff;">int</span> main(<span style="color: #0000ff;">int</span> argc, <span style="color: #0000ff;">char</span> *<span style="color: #000000;">argv[])
+{
+    </span><span style="color: #0000ff;">int</span> sock, pid, pipe_fd[<span style="color: #800080;">2</span><span style="color: #000000;">], epfd;
+
+    </span><span style="color: #0000ff;">struct</span><span style="color: #000000;"> sockaddr_in addr;
+    addr.sin_family </span>=<span style="color: #000000;"> PF_INET;
+    addr.sin_port </span>=<span style="color: #000000;"> htons(SERVER_PORT);
+    addr.sin_addr.s_addr </span>=<span style="color: #000000;"> inet_addr(SERVER_HOST);
+
+    </span><span style="color: #0000ff;">static</span> <span style="color: #0000ff;">struct</span> epoll_event ev, events[<span style="color: #800080;">2</span><span style="color: #000000;">]; 
+    ev.events </span>= EPOLLIN |<span style="color: #000000;"> EPOLLET;
+
+    </span><span style="color: #008000;">//</span><span style="color: #008000;">退出标志</span>
+    <span style="color: #0000ff;">int</span> continue_to_work = <span style="color: #800080;">1</span><span style="color: #000000;">;
+
+    CHK2(sock,socket(PF_INET, SOCK_STREAM, </span><span style="color: #800080;">0</span><span style="color: #000000;">));
+    CHK(connect(sock, (</span><span style="color: #0000ff;">struct</span> sockaddr *)&amp;addr, <span style="color: #0000ff;">sizeof</span>(addr)) &lt; <span style="color: #800080;">0</span><span style="color: #000000;">);
+
+    CHK(pipe(pipe_fd));
+    
+    CHK2(epfd,epoll_create(EPOLL_SIZE));
+
+    ev.data.fd </span>=<span style="color: #000000;"> sock;
+    CHK(epoll_ctl(epfd, EPOLL_CTL_ADD, sock, </span>&amp;<span style="color: #000000;">ev));
+
+    ev.data.fd </span>= pipe_fd[<span style="color: #800080;">0</span><span style="color: #000000;">];
+    CHK(epoll_ctl(epfd, EPOLL_CTL_ADD, pipe_fd[</span><span style="color: #800080;">0</span>], &amp;<span style="color: #000000;">ev));
+
+    </span><span style="color: #008000;">//</span><span style="color: #008000;"> 调用fork产生两个进程</span>
+<span style="color: #000000;">    CHK2(pid,fork());
+    </span><span style="color: #0000ff;">switch</span><span style="color: #000000;">(pid)
+    {
+        </span><span style="color: #0000ff;">case</span> <span style="color: #800080;">0</span>:                   <span style="color: #008000;">//</span><span style="color: #008000;"> 子进程</span>
+            close(pipe_fd[<span style="color: #800080;">0</span>]);    <span style="color: #008000;">//</span><span style="color: #008000;"> 关闭读端</span>
+            printf(<span style="color: #800000;">"</span><span style="color: #800000;">Enter 'exit' to exit\n</span><span style="color: #800000;">"</span><span style="color: #000000;">);
+            </span><span style="color: #0000ff;">while</span><span style="color: #000000;">(continue_to_work)
+            {
+                bzero(</span>&amp;<span style="color: #000000;">message, BUF_SIZE);
+                fgets(message, BUF_SIZE, stdin);
+
+                </span><span style="color: #008000;">//</span><span style="color: #008000;"> 当收到exit命令时，退出</span>
+                <span style="color: #0000ff;">if</span>(strncasecmp(message, CMD_EXIT, strlen(CMD_EXIT)) == <span style="color: #800080;">0</span><span style="color: #000000;">)
+                {
+                    continue_to_work </span>= <span style="color: #800080;">0</span><span style="color: #000000;">;
+                }
+                </span><span style="color: #0000ff;">else</span><span style="color: #000000;">
+                {            
+                    CHK(write(pipe_fd[</span><span style="color: #800080;">1</span>], message, strlen(message) - <span style="color: #800080;">1</span><span style="color: #000000;">));
+                }
+            }
+            </span><span style="color: #0000ff;">break</span><span style="color: #000000;">;
+        </span><span style="color: #0000ff;">default</span>:                 <span style="color: #008000;">//</span><span style="color: #008000;"> 父进程</span>
+            close(pipe_fd[<span style="color: #800080;">1</span>]);   <span style="color: #008000;">//</span><span style="color: #008000;"> 关闭写端</span>
+            <span style="color: #0000ff;">int</span><span style="color: #000000;"> epoll_events_count, res;
+            </span><span style="color: #0000ff;">while</span><span style="color: #000000;">(continue_to_work) 
+            {
+                CHK2(epoll_events_count,epoll_wait(epfd, events, </span><span style="color: #800080;">2</span><span style="color: #000000;">, EPOLL_RUN_TIMEOUT));
+
+                </span><span style="color: #0000ff;">for</span>(<span style="color: #0000ff;">int</span> i = <span style="color: #800080;">0</span>; i &lt; epoll_events_count ; i++<span style="color: #000000;">)
+                {
+                    bzero(</span>&amp;<span style="color: #000000;">message, BUF_SIZE);
+                    </span><span style="color: #0000ff;">if</span>(events[i].data.fd == sock)   <span style="color: #008000;">//</span><span style="color: #008000;">从服务器接受信息</span>
+<span style="color: #000000;">                    {
+                        CHK2(res,recv(sock, message, BUF_SIZE, </span><span style="color: #800080;">0</span><span style="color: #000000;">));
+                        </span><span style="color: #0000ff;">if</span>(res == <span style="color: #800080;">0</span>)               <span style="color: #008000;">//</span><span style="color: #008000;">服务器已关闭</span>
+<span style="color: #000000;">                        {
+                            CHK(close(sock));
+                            continue_to_work </span>= <span style="color: #800080;">0</span><span style="color: #000000;">;
+                        }
+                        </span><span style="color: #0000ff;">else</span><span style="color: #000000;"> 
+                        {
+                            printf(</span><span style="color: #800000;">"</span><span style="color: #800000;">%s\n</span><span style="color: #800000;">"</span><span style="color: #000000;">, message);
+                        }
+                    }
+                    </span><span style="color: #0000ff;">else</span>        <span style="color: #008000;">//</span><span style="color: #008000;">从子进程接受信息</span>
+<span style="color: #000000;">                    {
+                        CHK2(res, read(events[i].data.fd, message, BUF_SIZE));
+                        </span><span style="color: #0000ff;">if</span>(res == <span style="color: #800080;">0</span><span style="color: #000000;">)
+                        {
+                            continue_to_work </span>= <span style="color: #800080;">0</span><span style="color: #000000;">; 
+                        }
+                        </span><span style="color: #0000ff;">else</span><span style="color: #000000;">
+                        {
+                            CHK(send(sock, message, BUF_SIZE, </span><span style="color: #800080;">0</span><span style="color: #000000;">));
+                        }
+                    }
+                }
+            }
+    }
+    </span><span style="color: #0000ff;">if</span><span style="color: #000000;">(pid)
+    {
+        close(pipe_fd[</span><span style="color: #800080;">0</span><span style="color: #000000;">]);
+        close(sock);
+    }</span><span style="color: #0000ff;">else</span><span style="color: #000000;">
+    {
+        close(pipe_fd[</span><span style="color: #800080;">1</span><span style="color: #000000;">]);
+    }
+
+    </span><span style="color: #0000ff;">return</span> <span style="color: #800080;">0</span><span style="color: #000000;">;
+}</span></pre>
+<div class="cnblogs_code_toolbar"><span class="cnblogs_code_copy"><a href="javascript:void(0);" onclick="copyCnblogsCode(this)" title="复制代码"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/copycode.gif" alt="复制代码"></a></span></div></div></div><div id="MySignature"></div>
+<div class="clear"></div>
+<div id="blog_post_info_block">
+<div id="BlogPostCategory">分类: <a href="http://www.cnblogs.com/venow/category/430793.html">Linux C编程</a></div>
+<div id="EntryTag"></div>
+<div id="blog_post_info"><div id="green_channel">
+<a href="javascript:void(0);" id="green_channel_digg" onclick="DiggIt(2790031,cb_blogId,1);green_channel_success(this,'谢谢推荐！');">好文要顶</a>
+<a id="green_channel_follow" onclick="c_follow();" href="javascript:void(0);">关注我</a>
+<a id="green_channel_favorite" onclick="AddToWz(cb_entryId);return false;" href="javascript:void(0);">收藏该文</a><a id="green_channel_contact" href="http://msg.cnblogs.com/send/venow" target="_blank">联系我</a>
+<a id="green_channel_weibo" href="javascript:void(0);" title="分享至新浪微博" onclick="ShareToTsina()"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/icon_weibo_24.png" alt=""></a>
+<a id="green_channel_wechat" href="javascript:void(0);" title="分享至微信" onclick="shareOnWechat()"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/wechat.png" alt=""></a>
+</div>
+<div id="author_profile">
+<div id="author_profile_info" class="author_profile_info">
+<a href="http://home.cnblogs.com/u/venow/" target="_blank"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/u373143.jpg" class="author_avatar" alt=""></a>
+<div id="author_profile_detail" class="author_profile_info">
+<a href="http://home.cnblogs.com/u/venow/">venow</a><br>
+<a href="http://home.cnblogs.com/u/venow/followees">关注 - 0</a><br>
+<a href="http://home.cnblogs.com/u/venow/followers">粉丝 - 86</a>
+</div>
+</div>
+<div class="clear"></div>
+<div id="author_profile_honor"></div>
+<div id="author_profile_follow">
+    <a href="javascript:void(0);" onclick="c_follow();return false;">+加关注</a>
+</div>
+</div>
+<div id="div_digg">										
+    <div class="diggit" onclick="votePost(2790031,'Digg')">
+        <span class="diggnum" id="digg_count">7</span>
+    </div>
+	<div class="buryit" onclick="votePost(2790031,'Bury')"> 
+		<span class="burynum" id="bury_count">0</span>
+	</div>
+	<div class="clear"></div>	
+	<div class="diggword" id="digg_tips">
+    (请您对文章做出评价)
+    </div>	
+</div>
+</div>
+<div class="clear"></div>
+<div id="post_next_prev"><a href="http://www.cnblogs.com/venow/archive/2012/11/27/2785468.html" class="p_n_p_prefix">« </a> 上一篇：<a href="http://www.cnblogs.com/venow/archive/2012/11/27/2785468.html" title="发布于2012-11-27 20:53">简单xmlwriter类</a><br><a href="http://www.cnblogs.com/venow/archive/2012/12/08/2808392.html" class="p_n_p_prefix">» </a> 下一篇：<a href="http://www.cnblogs.com/venow/archive/2012/12/08/2808392.html" title="发布于2012-12-08 11:15">可伸缩多线程任务队列</a><br></div>
+</div>
+
+
+		</div>
+		<div class="postDesc">posted @ <span id="post-date">2012-11-30 20:39</span> <a href="http://www.cnblogs.com/venow/">venow</a> 阅读(<span id="post_view_count">20173</span>) 评论(<span id="post_comment_count">9</span>)  <a href="http://i.cnblogs.com/EditPosts.aspx?postid=2790031" rel="nofollow">编辑</a> <a href="#" onclick="AddToWz(2790031);return false;">收藏</a></div>
+	</div>
+	<script type="text/javascript">var allowComments=true,isLogined=false,cb_blogId=108074,cb_entryId=2790031,cb_blogApp=currentBlogApp,cb_blogUserGuid='05166378-bf50-e111-aa3f-842b2b196315',cb_entryCreatedDate='2012/11/30 20:39:00';loadViewCount(cb_entryId);</script>
+	
+</div><!--end: topics 文章、评论容器-->
+</div><a name="!comments"></a><div id="blog-comments-placeholder"><div id="comments_pager_top"></div>
+<!--done-->
+<div class="feedback_area_title">评论列表</div>
+<div class="feedbackNoItems"></div>
+	
+
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#2733044" class="layer">#1楼</a><a name="2733044" id="comment_anchor_2733044"></a>  <span class="comment_date">2013-07-23 07:06</span> <a id="a_comment_author_2733044" href="http://www.cnblogs.com/jcontheroad/" target="_blank">jc_ontheroad</a> <a href="http://msg.cnblogs.com/send/jc_ontheroad" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_2733044" class="blog_comment_body">原理讲得清晰。</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(2733044,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(2733044,'Bury',this)">反对(1)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#2768510" class="layer">#2楼</a><a name="2768510" id="comment_anchor_2768510"></a>  <span class="comment_date">2013-09-04 18:22</span> <a id="a_comment_author_2768510" href="http://home.cnblogs.com/u/564650/" target="_blank">我是一块肉</a> <a href="http://msg.cnblogs.com/send/%E6%88%91%E6%98%AF%E4%B8%80%E5%9D%97%E8%82%89" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_2768510" class="blog_comment_body">if(events[i].data.fd == listener)                    //新的连接到来，将连接添加到epoll中，并发送欢迎消息<br>            {<br>                CHK2(client,accept(listener, (struct sockaddr *) &amp;their_addr, &amp;socklen));<br>                setnonblocking(client);<br>                ev.data.fd = client;<br>                CHK(epoll_ctl(epfd, EPOLL_CTL_ADD, client, &amp;ev));<br><br>                clients_list.push_back(client);                  // 添加新的客户端到list<br>                bzero(message, BUF_SIZE);<br>                res = sprintf(message, STR_WELCOME, client);<br>                CHK2(res, send(client, message, BUF_SIZE, 0));<br><br>            }<br><br>这段代码中没有close(client)会导致服务器端句柄数用光。</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(2768510,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(2768510,'Bury',this)">反对(0)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#2793980" class="layer">#3楼</a><a name="2793980" id="comment_anchor_2793980"></a>  <span class="comment_date">2013-10-15 20:29</span> <a id="a_comment_author_2793980" href="http://home.cnblogs.com/u/547546/" target="_blank">bg2bkk</a> <a href="http://msg.cnblogs.com/send/bg2bkk" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_2793980" class="blog_comment_body"><a href="#2768510" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,2768510);">@</a>我是一块肉<br>你说的对了一半。<br>代码里client还要用，所以不要关闭。<br>限制在 打开的文件数目 上<br>linux下输入命令ulimit -a，可以看到open files 一般时1024，所以未经修改时做本实验，最大打开到1023号。所以要修改。<br><br>小弟也是看了你的回复才取问别人的，呵呵。</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(2793980,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(2793980,'Bury',this)">反对(1)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#2973870" class="layer">#4楼</a><a name="2973870" id="comment_anchor_2973870"></a>  <span class="comment_date">2014-06-30 01:24</span> <a id="a_comment_author_2973870" href="http://www.cnblogs.com/learn-my-life/" target="_blank">赵大哥</a> <a href="http://msg.cnblogs.com/send/%E8%B5%B5%E5%A4%A7%E5%93%A5" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_2973870" class="blog_comment_body">菜鸟一枚，表示CHK和CHK2的用法学习了。</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(2973870,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(2973870,'Bury',this)">反对(0)</a></div><span id="comment_2973870_avatar" style="display:none;">http://pic.cnblogs.com/face/526751/20130511125907.png</span>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#3128813" class="layer">#5楼</a><a name="3128813" id="comment_anchor_3128813"></a>  <span class="comment_date">2015-02-12 17:20</span> <a id="a_comment_author_3128813" href="http://home.cnblogs.com/u/548241/" target="_blank">滚出碗里</a> <a href="http://msg.cnblogs.com/send/%E6%BB%9A%E5%87%BA%E7%A2%97%E9%87%8C" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3128813" class="blog_comment_body">服务端没问题 问题出在 客户端  客户用完后要关闭socket 当客户端关闭了  服务端会做下面处理：<br>    if(len == 0)   //客户端关闭或出错，关闭socket，并从list移除socket<br>    {<br>        CHK(close(client));<br>        clients_list.remove(client);<br>    }<br><br>但是问题来了，如果客户端就是不关闭呢？？？？<br>其实我们可以这样处理：在服务器做下连接数设置限制。 比如当超过1024时 我们给他出错。<br><br>那么问题又来了 那就是 我们用epoll的目的(我原先的理解是epoll 能让我们的网络程序能有无限多的连接数)！！！请看文章开头【<br>epoll是Linux内核为处理大批句柄而作改进的poll，是Linux下多路复用IO接口select/poll的增强版本，它能显著的减少程序在大量并发连接中只有少量活跃的情况下的系统CPU利用率。】这里好像也没说用epoll 能让我们的网络程序能有无限多的连接数。<br>到此我觉得楼主的client程序有问题应该要关闭socket吧！！！<br><br>对于楼上一个人说设置 ulimit -f unlimited<br>我试过了 我这边没用<br>就算有用那最终的open数也是会受系统制约的。肯能对于10000个有用，但是当你open更多呢？最终还是会有问题的<br> <br>有什么不对的地方 楼下 楼主 指正</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3128813,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3128813,'Bury',this)">反对(0)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#3136630" class="layer">#6楼</a><a name="3136630" id="comment_anchor_3136630"></a>  <span class="comment_date">2015-03-06 18:00</span> <a id="a_comment_author_3136630" href="http://home.cnblogs.com/u/716840/" target="_blank">coolfish_a</a> <a href="http://msg.cnblogs.com/send/coolfish_a" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3136630" class="blog_comment_body">server.cpp文件中这段，没理解，为什么是*it != client时，发送信息<br> list&lt;int&gt;::iterator it;<br>        for(it = clients_list.begin(); it != clients_list.end(); it++)<br>        {<br>           if(*it != client)<br>           { <br>                CHK(send(*it, message, BUF_SIZE, 0));<br>           }<br>        }</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3136630,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3136630,'Bury',this)">反对(0)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#3153456" class="layer">#7楼</a><a name="3153456" id="comment_anchor_3153456"></a>  <span class="comment_date">2015-03-31 15:15</span> <a id="a_comment_author_3153456" href="http://www.cnblogs.com/cner/" target="_blank">AllNew2015</a> <a href="http://msg.cnblogs.com/send/AllNew2015" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3153456" class="blog_comment_body"><a href="#3136630" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,3136630);">@</a>coolfish_a<br><br>那是向聊天室的其他人发消息</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3153456,'Digg',this)">支持(1)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3153456,'Bury',this)">反对(0)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#3153549" class="layer">#8楼</a><a name="3153549" id="comment_anchor_3153549"></a>  <span class="comment_date">2015-03-31 16:48</span> <a id="a_comment_author_3153549" href="http://home.cnblogs.com/u/716840/" target="_blank">coolfish_a</a> <a href="http://msg.cnblogs.com/send/coolfish_a" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3153549" class="blog_comment_body"><a href="#3153456" title="查看所回复的评论" onclick="commentManager.renderComments(0,50,3153456);">@</a>AllNew2015<br>谢谢 知道了</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3153549,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3153549,'Bury',this)">反对(0)</a></div>
+			</div>
+		</div>
+	
+		<div class="feedbackItem">
+			<div class="feedbackListSubtitle">
+				<div class="feedbackManage">
+					&nbsp;&nbsp;<span class="comment_actions"></span>
+				</div>
+				<a href="#3235869" class="layer">#9楼</a><a name="3235869" id="comment_anchor_3235869"></a><span id="comment-maxId" style="display:none;">3235869</span><span id="comment-maxDate" style="display:none;">2015/7/27 10:01:34</span>  <span class="comment_date">2015-07-27 10:01</span> <a id="a_comment_author_3235869" href="http://www.cnblogs.com/styshoo/" target="_blank">styshoo</a> <a href="http://msg.cnblogs.com/send/styshoo" title="发送站内短消息" class="sendMsg2This">&nbsp;</a>
+			</div>
+			<div class="feedbackCon">
+				<div id="comment_body_3235869" class="blog_comment_body">client端，这行写错了。<br><br>CHK(connect(sock, (struct sockaddr *)&amp;addr, sizeof(addr)) &lt; 0);<br>应该取消掉&lt; 0这个，和CHK重复了。</div><div class="comment_vote"><a href="javascript:void(0);" class="comment_digg" onclick="return voteComment(3235869,'Digg',this)">支持(0)</a><a href="javascript:void(0);" class="comment_bury" onclick="return voteComment(3235869,'Bury',this)">反对(0)</a></div>
+			</div>
+		</div>
+	<div id="comments_pager_bottom"></div></div><script type="text/javascript">var commentManager = new blogCommentManager();commentManager.renderComments(0);</script>
+<div id="comment_form" class="commentform">
+<a name="commentform"></a>
+<div id="divCommentShow"></div>
+<div id="comment_nav"><span id="span_refresh_tips"></span><a href="javascript:void(0);" onclick="return RefreshCommentList();" id="lnk_RefreshComments" runat="server" clientidmode="Static">刷新评论</a><a href="#" onclick="return RefreshPage();">刷新页面</a><a href="#top">返回顶部</a></div>
+<div id="comment_form_container"><div class="login_tips">注册用户登录后才能发表评论，请 <a rel="nofollow" href="javascript:void(0);" class="underline" onclick="return login('commentform');">登录</a> 或 <a rel="nofollow" href="javascript:void(0);" class="underline" onclick="return register();">注册</a>，<a href="http://www.cnblogs.com/">访问</a>网站首页。</div></div>
+<div class="ad_text_commentbox" id="ad_text_under_commentbox"></div>
+<div id="ad_t2"><a href="http://www.ucancode.com/index.htm" target="_blank">【推荐】50万行VC++源码: 大型组态工控、电力仿真CAD与GIS源码库</a><br><a href="http://www.rongcloud.cn/" target="_blank">【推荐】融云即时通讯云－专注为 App 开发者提供IM云服务</a><br><a href="http://www.ucloud.cn/site/active/new_gift.html?utm_source=cost&amp;utm_campaign=bokeyuan1&amp;utm_medium=display&amp;utm_content=3yuecu" target="_blank">【推荐】UCloud开年大礼，充5000返1000；买云主机送CDN，详情点击</a><br></div>
+<div id="opt_under_post"></div>
+<div id="ad_c1" class="c_ad_block">     <ins data-adsbygoogle-status="done" class="adsbygoogle" style="display: inline-block; width: 300px; height: 250px;" data-ad-client="ca-pub-4210569241504288" data-ad-slot="5457903683"><ins id="aswift_0_expand" style="display:inline-table;border:none;height:250px;margin:0;padding:0;position:relative;visibility:visible;width:300px;background-color:transparent"><ins id="aswift_0_anchor" style="display:block;border:none;height:250px;margin:0;padding:0;position:relative;visibility:visible;width:300px;background-color:transparent"><iframe marginwidth="0" marginheight="0" vspace="0" hspace="0" allowtransparency="true" scrolling="no" allowfullscreen="true" onload="var i=this.id,s=window.google_iframe_oncopy,H=s&amp;&amp;s.handlers,h=H&amp;&amp;H[i],w=this.contentWindow,d;try{d=w.document}catch(e){}if(h&amp;&amp;d&amp;&amp;(!d.body||!d.body.firstChild)){if(h.call){setTimeout(h,0)}else if(h.match){try{h=s.upd(h,i)}catch(e){}w.location.replace(h)}}" id="aswift_0" name="aswift_0" style="left:0;position:absolute;top:0;" frameborder="0" height="250" width="300"></iframe></ins></ins></ins></div>
+<div id="under_post_news"><div class="itnews c_ad_block"><b>最新IT新闻</b>:<br> ·  <a href="http://news.cnblogs.com/n/541397/" target="_blank">大众点评回应刷信誉：零容忍 但法律不完善</a><br> ·  <a href="http://news.cnblogs.com/n/541396/" target="_blank">微软给力！Edge浏览器将支持Chrome扩展插件</a><br> ·  <a href="http://news.cnblogs.com/n/541395/" target="_blank">从高空落下 蚂蚁为什么摔不死？</a><br> ·  <a href="http://news.cnblogs.com/n/541394/" target="_blank">传索尼拟推新版“PS4.5”游戏机 配4K分辨率</a><br> ·  <a href="http://news.cnblogs.com/n/541393/" target="_blank">周航：如果你对人性乐观，多半也会对AI乐观</a><br>» <a href="http://news.cnblogs.com/" title="IT新闻" target="_blank">更多新闻...</a></div></div>
+<div id="ad_c2" class="c_ad_block"><a href="https://www.jpush.cn/?from=cnblogs01" target="_blank"><img src="Linux%20epoll%E6%A8%A1%E5%9E%8B%20-%20venow%20-%20%E5%8D%9A%E5%AE%A2%E5%9B%AD_files/24442-20160307140747632-1210035054.jpg" alt="极光推送20160307" title="极光推送20160307" height="60" width="468"></a></div>
+<div id="under_post_kb"><div class="itnews c_ad_block" id="kb_block"><b>最新知识库文章</b>:<br><div id="kb_recent"> ·  <a href="http://kb.cnblogs.com/page/541230/" target="_blank">如何运维千台以上游戏云服务器</a><br> ·  <a href="http://kb.cnblogs.com/page/539160/" target="_blank">架构漫谈（一）：什么是架构？</a><br> ·  <a href="http://kb.cnblogs.com/page/540632/" target="_blank">架构的本质</a><br> ·  <a href="http://kb.cnblogs.com/page/538249/" target="_blank">谷歌背后的数学</a><br> ·  <a href="http://kb.cnblogs.com/page/533808/" target="_blank">Medium开发团队谈架构设计</a><br></div>» <a href="http://kb.cnblogs.com/" target="_blank">更多知识库文章...</a></div></div>
+<div id="HistoryToday" class="c_ad_block"></div>
+<script type="text/javascript">
+$(function () {
+    setTimeout(function () { incrementViewCount(cb_entryId); }, 50);
+    deliverAdT2();
+    deliverAdC1();
+    deliverAdC2();    
+    loadNewsAndKb();
+    loadBlogSignature();
+    LoadPostInfoBlock(cb_blogId, cb_entryId, cb_blogApp, cb_blogUserGuid);
+    GetPrevNextPost(cb_entryId, cb_blogId, cb_entryCreatedDate);
+    loadOptUnderPost();
+    GetHistoryToday(cb_blogId, cb_blogApp, cb_entryCreatedDate);    
+});
+</script>
+</div>
+
+
+	</div><!--end: forFlow -->
+	</div><!--end: mainContent 主体内容容器-->
+
+	<div id="sideBar">
+		<div id="sideBarMain">
+			
+<!--done-->
+<div class="newsItem">
+<h3 class="catListTitle">公告</h3>
+	<div id="blog-news"><div id="profile_block">昵称：<a href="http://home.cnblogs.com/u/venow/">venow</a><br>园龄：<a href="http://home.cnblogs.com/u/venow/" title="入园时间：2012-02-06">4年1个月</a><br>粉丝：<a href="http://home.cnblogs.com/u/venow/followers/">86</a><br>关注：<a href="http://home.cnblogs.com/u/venow/followees/">0</a><div id="p_b_follow"><a href="javascript:void(0);" onclick="cnblogs.UserManager.FollowBlogger('05166378-bf50-e111-aa3f-842b2b196315')">+加关注</a></div></div></div><script type="text/javascript">loadBlogNews();</script>
+</div>
+
+			<div id="calendar"><div id="blog-calendar" style=""><table id="blogCalendar" class="Cal" title="Calendar" cellpadding="0" cellspacing="0">
+	<tbody><tr><td colspan="7"><table class="CalTitle" cellspacing="0">
+		<tbody><tr><td class="CalNextPrev"><a href="javascript:void(0);" onclick="loadBlogCalendar('2012/10/01');return false;">&lt;</a></td><td align="center">2012年11月</td><td class="CalNextPrev" align="right"><a href="javascript:void(0);" onclick="loadBlogCalendar('2012/12/01');return false;">&gt;</a></td></tr>
+	</tbody></table></td></tr><tr><th class="CalDayHeader" abbr="日" scope="col" align="center">日</th><th class="CalDayHeader" abbr="一" scope="col" align="center">一</th><th class="CalDayHeader" abbr="二" scope="col" align="center">二</th><th class="CalDayHeader" abbr="三" scope="col" align="center">三</th><th class="CalDayHeader" abbr="四" scope="col" align="center">四</th><th class="CalDayHeader" abbr="五" scope="col" align="center">五</th><th class="CalDayHeader" abbr="六" scope="col" align="center">六</th></tr><tr><td class="CalOtherMonthDay" align="center">28</td><td class="CalOtherMonthDay" align="center">29</td><td class="CalOtherMonthDay" align="center">30</td><td class="CalOtherMonthDay" align="center">31</td><td align="center">1</td><td align="center">2</td><td class="CalWeekendDay" align="center"><a href="http://www.cnblogs.com/venow/archive/2012/11/03.html"><u>3</u></a></td></tr><tr><td class="CalWeekendDay" align="center">4</td><td align="center"><a href="http://www.cnblogs.com/venow/archive/2012/11/05.html"><u>5</u></a></td><td align="center">6</td><td align="center">7</td><td align="center">8</td><td align="center">9</td><td class="CalWeekendDay" align="center">10</td></tr><tr><td class="CalWeekendDay" align="center">11</td><td align="center">12</td><td align="center">13</td><td align="center">14</td><td align="center">15</td><td align="center">16</td><td class="CalWeekendDay" align="center">17</td></tr><tr><td class="CalWeekendDay" align="center">18</td><td align="center">19</td><td align="center">20</td><td align="center"><a href="http://www.cnblogs.com/venow/archive/2012/11/21.html"><u>21</u></a></td><td align="center"><a href="http://www.cnblogs.com/venow/archive/2012/11/22.html"><u>22</u></a></td><td align="center">23</td><td class="CalWeekendDay" align="center">24</td></tr><tr><td class="CalWeekendDay" align="center">25</td><td align="center">26</td><td align="center"><a href="http://www.cnblogs.com/venow/archive/2012/11/27.html"><u>27</u></a></td><td align="center">28</td><td align="center">29</td><td align="center"><a href="http://www.cnblogs.com/venow/archive/2012/11/30.html"><u>30</u></a></td><td class="CalOtherMonthDay" align="center">1</td></tr><tr><td class="CalOtherMonthDay" align="center">2</td><td class="CalOtherMonthDay" align="center">3</td><td class="CalOtherMonthDay" align="center">4</td><td class="CalOtherMonthDay" align="center">5</td><td class="CalOtherMonthDay" align="center">6</td><td class="CalOtherMonthDay" align="center">7</td><td class="CalOtherMonthDay" align="center">8</td></tr>
+</tbody></table></div><script type="text/javascript">loadBlogDefaultCalendar();</script></div>
+			
+			<div id="leftcontentcontainer">
+				<div id="blog-sidecolumn"><div id="sidebar_search" class="sidebar-block">
+<div id="sidebar_search" class="mySearch">
+<h3 class="catListTitle">搜索</h3>
+<div id="sidebar_search_box">
+<div id="widget_my_zzk" class="div_my_zzk"><input id="q" onkeydown="return zzk_go_enter(event);" class="input_my_zzk" type="text">&nbsp;<input onclick="zzk_go()" value="找找看" id="btnZzk" class="btn_my_zzk" type="button"></div>
+<div id="widget_my_google" class="div_my_zzk"><input name="google_q" id="google_q" onkeydown="return google_go_enter(event)" class="input_my_zzk" type="text">&nbsp;<input onclick="google_go()" value="谷歌搜索" class="btn_my_zzk" type="button"></div>
+</div>
+</div>
+
+</div><div id="sidebar_shortcut" class="sidebar-block">
+<div class="catListLink">
+<h3 class="catListTitle">常用链接</h3>
+<ul>
+<li><a href="http://www.cnblogs.com/venow/p/" title="我的博客的随笔列表">我的随笔</a></li><li><a href="http://www.cnblogs.com/venow/MyComments.html" title="我发表过的评论列表">我的评论</a></li><li><a href="http://www.cnblogs.com/venow/OtherPosts.html" title="我评论过的随笔列表">我的参与</a></li><li><a href="http://www.cnblogs.com/venow/RecentComments.html" title="我的博客的评论列表">最新评论</a></li><li><a href="http://www.cnblogs.com/venow/tag/" title="我的博客的标签列表">我的标签</a></li>
+</ul>
+<div id="itemListLin_con" style="display:none;">
+<ul>
+
+</ul>
+</div>
+</div></div><div id="sidebar_toptags" class="sidebar-block">
+<div class="catListTag">
+<h3 class="catListTitle">我的标签</h3>
+<ul>
+<li><a href="http://www.cnblogs.com/venow/tag/%E4%BA%8C%E5%8F%89%E6%A0%91/">二叉树</a>(1)</li><li><a href="http://www.cnblogs.com/venow/tag/%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F/">冒泡排序</a>(1)</li>
+</ul>
+</div></div><div id="sidebar_categories">
+<div class="catListPostCategory">
+<h3 class="catListTitle">随笔分类</h3>
+
+<ul>
+
+<li><a id="CatList_LinkList_0_Link_0" href="http://www.cnblogs.com/venow/category/371653.html">C++(7)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_1" href="http://www.cnblogs.com/venow/category/431077.html">codeproject源码研究(4)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_2" href="http://www.cnblogs.com/venow/category/430793.html">Linux C编程(3)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_3" href="http://www.cnblogs.com/venow/category/418693.html">Qt编程(17)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_4" href="http://www.cnblogs.com/venow/category/387335.html">WinSocket(4)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_5" href="http://www.cnblogs.com/venow/category/450880.html">二叉树_笔试题</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_6" href="http://www.cnblogs.com/venow/category/447600.html">海量数据处理(2)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_7" href="http://www.cnblogs.com/venow/category/450879.html">链表_笔试题</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_8" href="http://www.cnblogs.com/venow/category/422492.html">设计模式(6)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_9" href="http://www.cnblogs.com/venow/category/401783.html">数据结构与算法(19)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_10" href="http://www.cnblogs.com/venow/category/406608.html">算法面试(53)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_11" href="http://www.cnblogs.com/venow/category/447066.html">杂项(1)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_12" href="http://www.cnblogs.com/venow/category/507746.html">转载(1)</a> </li>
+
+<li><a id="CatList_LinkList_0_Link_13" href="http://www.cnblogs.com/venow/category/450881.html">字符串_笔试题(1)</a> </li>
+
+</ul>
+
+</div>
+
+<div class="catListPostArchive">
+<h3 class="catListTitle">随笔档案</h3>
+
+<ul>
+
+<li><a id="CatList_LinkList_1_Link_0" href="http://www.cnblogs.com/venow/archive/2013/08.html">2013年8月 (1)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_1" href="http://www.cnblogs.com/venow/archive/2013/01.html">2013年1月 (4)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_2" href="http://www.cnblogs.com/venow/archive/2012/12.html">2012年12月 (3)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_3" href="http://www.cnblogs.com/venow/archive/2012/11.html">2012年11月 (8)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_4" href="http://www.cnblogs.com/venow/archive/2012/10.html">2012年10月 (23)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_5" href="http://www.cnblogs.com/venow/archive/2012/09.html">2012年9月 (19)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_6" href="http://www.cnblogs.com/venow/archive/2012/08.html">2012年8月 (54)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_7" href="http://www.cnblogs.com/venow/archive/2012/06.html">2012年6月 (4)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_8" href="http://www.cnblogs.com/venow/archive/2012/04.html">2012年4月 (1)</a> </li>
+
+<li><a id="CatList_LinkList_1_Link_9" href="http://www.cnblogs.com/venow/archive/2012/02.html">2012年2月 (1)</a> </li>
+
+</ul>
+
+</div>
+
+<div class="catListArticleCategory">
+<h3 class="catListTitle">文章分类</h3>
+
+<ul>
+
+<li><a id="CatList_LinkList_2_Link_0" href="http://www.cnblogs.com/venow/category/352842.html">数据结构与算法</a> </li>
+
+</ul>
+
+</div>
+
+</div><div id="sidebar_scorerank" class="sidebar-block">
+<div class="catListBlogRank">
+<h3 class="catListTitle">积分与排名</h3>
+<ul>
+	<li class="liScore">
+		积分 -	122446
+	</li>
+	<li class="liRank">
+		排名 -	1524
+	</li>
+</ul>
+</div>
+
+
+</div><div id="sidebar_recentcomments" class="sidebar-block"><div id="recent_comments_wrap">
+<div class="catListComment">
+<h3 class="catListTitle">最新评论</h3>
+	<div id="RecentCommentsBlock"><ul>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/venow/archive/2012/09/04/2670158.html#3377760">1. Re:大数相乘</a></li>
+    <li class="recent_comment_body">很好，学习了。但可以把0*4=0这种情况考虑进来，去除0时，要保留等于0的情况。</li>
+    <li class="recent_comment_author">--广西南宁陆杨</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/venow/archive/2012/11/21/2781450.html#3363333">2. Re:C语言内存检测</a></li>
+    <li class="recent_comment_body">nice博主可不可以教教我如何通过c语言获得内存的大小啊？或者通过c语言读取内存任意一个允许读取的地区？还有我想请教一下一个进程在内存中的映像代码段，静态存储区，堆栈段，这个是每个进程都会这么设置么？......</li>
+    <li class="recent_comment_author">--孙悟坑</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/venow/archive/2012/11/21/2781450.html#3359195">3. Re:C语言内存检测</a></li>
+    <li class="recent_comment_body">Great :-)</li>
+    <li class="recent_comment_author">--颜汇杭</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/venow/archive/2012/08/08/2446931.html#3257619">4. Re:C++之private虚函数</a></li>
+    <li class="recent_comment_body">虚表中的父类虚函数地址被子类覆盖，还是放在后面了？</li>
+    <li class="recent_comment_author">--爆炒噬金虫</li>
+    <li class="recent_comment_title"><a href="http://www.cnblogs.com/venow/archive/2012/08/08/2446931.html#3257613">5. Re:C++之private虚函数</a></li>
+    <li class="recent_comment_body">@不痛o就一下有用，但是博主写的太简单，没有讲类的内存分布。...</li>
+    <li class="recent_comment_author">--爆炒噬金虫</li>
+</ul>
+</div>
+</div>
+</div></div><div id="sidebar_topviewedposts" class="sidebar-block"><div id="topview_posts_wrap">
+<div class="catListView">
+<h3 class="catListTitle">阅读排行榜</h3>
+	<div id="TopViewPostsBlock"><ul><li><a href="http://www.cnblogs.com/venow/archive/2013/01/19/2867598.html">1. 腾讯社招面试经历(25912)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/11/30/2790031.html">2. Linux epoll模型(20173)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/10/16/2726576.html">3. QListWidget的简单用法(18359)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/10/16/2726587.html">4. QTreeWidget的简单用法(13020)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/11/22/2779667.html">5. 简单Linux C线程池(11911)</a></li></ul></div>
+</div>
+</div></div><div id="sidebar_topcommentedposts" class="sidebar-block"><div id="topfeedback_posts_wrap">
+<div class="catListFeedback">
+<h3 class="catListTitle">评论排行榜</h3>
+	<div id="TopFeedbackPostsBlock"><ul><li><a href="http://www.cnblogs.com/venow/archive/2013/01/19/2867598.html">1. 腾讯社招面试经历(20)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/11/30/2790031.html">2. Linux epoll模型(9)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/04/14/2444820.html">3. C++内存布局之虚拟继承(6)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/08/26/2657559.html">4. 单链表逆置(5)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/11/22/2779667.html">5. 简单Linux C线程池(5)</a></li></ul></div>
+</div>
+</div></div><div id="sidebar_topdiggedposts" class="sidebar-block"><div id="topdigg_posts_wrap">
+<div class="catListView">
+<h3 class="catListTitle">推荐排行榜</h3>
+<div id="TopDiggPostsBlock"><ul><li><a href="http://www.cnblogs.com/venow/archive/2012/11/30/2790031.html">1. Linux epoll模型(7)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/11/22/2779667.html">2. 简单Linux C线程池(3)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/08/18/2643984.html">3. 最小生成树之Kruskal(并查集实现)(2)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/08/31/2664969.html">4. 寻找二叉树两个结点的最低共同父节点(2)</a></li><li><a href="http://www.cnblogs.com/venow/archive/2012/08/28/2660208.html">5. 删除字符串中的数字并压缩字符串(1)</a></li></ul></div>
+</div></div></div></div><script type="text/javascript">loadBlogSideColumn();</script>
+			</div>
+			
+		</div><!--end: sideBarMain -->
+	</div><!--end: sideBar 侧边栏容器 -->
+	<div class="clear"></div>
+	</div><!--end: main -->
+	<div class="clear"></div>
+	<div id="footer">
+		
+<!--done-->
+Copyright ©2016 venow
+	</div><!--end: footer -->
+</div><!--end: home 自定义的最大容器 -->
+
+
+<iframe style="display: none; width: 0px; height: 0px;" name="google_osd_static_frame" id="google_osd_static_frame_9012496646769"></iframe></body></html>

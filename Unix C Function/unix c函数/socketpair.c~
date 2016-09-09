@@ -1,0 +1,37 @@
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+int socketpair(int domain, int type, int protocol, int sv[2]);
+
+----该函数用来创建一对无命名的，相互连接的unix域套接字
+
+----unix域套接字提供流和数据报两种接口，unix域数据报服务是可靠的，unix域套接字就像是"套接字和管道的混合"
+
+----"一对相互连接的unix域套接字可以起到全双工管道的作用，我们称其为fd管道"，以便和普通的管道区别开来。
+
+----一个例子：
+	int sockfd[2];
+	int ret = socketpair( AF_LOCAL, SOCK_STREAM, 0, sockfd);
+									SOCK_DGRAM
+DESCRIPTION
+       The socketpair() call creates an  unnamed  pair
+       of  connected  sockets in the specified domain,
+       of the specified type, and using the optionally
+       specified  protocol.   For  further  details of
+       these arguments, see socket(2).
+
+       The descriptors used  in  referencing  the  new
+       sockets  are  returned in sv[0] and sv[1].  The
+       two sockets are indistinguishable.
+
+RETURN VALUE
+       On success, zero is returned.  On error, -1  is
+       returned, and errno is set appropriately.
+
+
+
+
+
+
+
+
+

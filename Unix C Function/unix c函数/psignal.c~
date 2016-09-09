@@ -1,0 +1,17 @@
+p304
+#include<signal.h>
+void psignal(int signo,const char *msg);
+----该函数可移植地打印与信号编号对应的字符串
+----msg输出到标准输出文件，后面跟一个冒号和一个空格，再后面对该信号的说明，最后是一个换行符。如果msg为NULL，说明部分输出到标准错误文件，该函数类似于perror
+
+#include<signal.h>
+void psiginfo(const siginfo_t *info,const char *msg);
+----如果sigaction信号处理程序中有siginfo结构，则可以使用该函数打印信息
+----
+
+#include<signal.h>
+char *strsignal(int signo);
+----如果只需要信号的字符描述部分，也不需要把它写到标准错误文件中（如：可以写到日志文件中），可以使用strsignal函数，它类似于strerror
+----返回：指向描述该信号的字符串的指针
+
+

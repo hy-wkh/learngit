@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html xmlns:wb="http://open.weibo.com/wb"><head><script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/core.js" charset="utf-8" async="" type="text/javascript"></script><script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom_003" async="" type="text/javascript"></script><script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom_005" async="" type="text/javascript"></script><script charset="utf-8" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/id.php"></script><script charset="utf-8" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/shares.php"></script>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Linux下EPoll通信模型简析-模型 通信 Linux 业界-速途网</title>
+<meta name="viewport" content="initial-scale=1, maximum-scale=1"> 
+
+<link rel="stylesheet" href="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/content.css"> 
+<!--<link rel="stylesheet" href="http://www.sootoo.com/son_media/t14/css/content_1024.css" media="only screen and (min-width:768px) and (max-width:1023px)"> 
+<link rel="stylesheet" href="http://www.sootoo.com/son_media/t14/css/content_768.css" media="only screen and (min-width:480px) and (max-width:767px)">-->
+<link rel="stylesheet" href="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/content_320.css" media="only screen and (min-width:300px) and (max-width:479px)">
+<script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom_002" async="" type="text/javascript"></script><script type="text/javascript" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/jquery_002.js"></script>
+<script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/wb.js" type="text/javascript" charset="utf-8"></script>
+
+ <meta name="Keywords" content="模型,通信,Linux,业界,周勇,佚名">
+ <meta name="Description" content="Linux下EPoll通信模型简析">
+<meta http-equiv="X-UA-Compatible" content="IE=8">
+<script type="text/javascript" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/jssdk_soo.js"></script>
+
+
+
+
+<script charset="UTF-8" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/embed.js" async="" type="text/javascript"></script><script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/bundle.js" charset="UTF-8"></script><script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/iframeWidget.js" charset="UTF-8"></script></head>
+<body><div style="position: absolute; left: -1px; bottom: -1px; z-index: 0; width: 0px; height: 0px; overflow: hidden; visibility: hidden; display: none;" id="BAIDU_DUP_fp_wrapper"><iframe style="width: 0px; height: 0px; visibility: hidden; display: none;" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/o.html" id="BAIDU_DUP_fp_iframe"></iframe></div><iframe id="sina_anywhere_iframe" style="display: none;"></iframe><link type="text/css" rel="stylesheet" href="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/jiathis_counter.css"><link type="text/css" rel="stylesheet" href="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/jiathis_share.css"><iframe style="position: fixed; display: none; opacity: 0;" frameborder="0"></iframe><div style="position: absolute; z-index: 1000000000; display: none; top: 50%; left: 50%; overflow: auto;" class="jiathis_style"></div><div style="position: absolute; z-index: 1000000000; display: none; overflow: auto;" class="jiathis_style"></div><iframe src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/jiathis_utility.html" style="display: none;" frameborder="0"></iframe>
+<div class="wrap">
+    <!--////////////////////////////////////////////////////////////////////////////                 头部                      ///////////////////////////////////////////////////////////////////////////////////////////-->
+<script type="text/javascript" charset="gb2312" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/s.php"></script><script type="text/javascript" charset="gb2312" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/s.js"></script><script type="text/javascript" charset="gb2312" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/aroute.php"></script>
+  <div class="header">
+      <div class="header-top clearfix">
+        <a href="http://www.sootoo.com/" class="wlw">速途网</a>
+        <ul class="main-nav clearfix">
+            <li><a title="" href="http://ec.sootoo.com/" target="_blank">电商</a></li>
+            <li><a title="" href="http://ct.sootoo.com/" target="_blank">创投</a></li>
+            <li><a title="" href="http://www.sootoo.com/tag/18/" target="_blank">游戏</a></li>
+            <li><a title="" href="http://it.sootoo.com/" target="_blank">IT</a></li>
+            <li><a title="" href="http://www.sootoo.com/tag/106/" target="_blank">视频</a></li>
+            <li><a title="" href="http://www.sootoo.com/zt80/" target="_blank">沙龙</a></li>
+            <li><a title="" href="http://www.sootoo.com/keyword/3979/" target="_blank">物联网</a></li>
+            <li><a title="" href="http://www.sootoo.com/keyword/202360/" target="_blank">智能硬件</a></li>
+            <li><a title="" href="http://www.sootoo.com/keyword/135063/" target="_blank">互联网金融</a></li>
+            <li><a title="" href="http://www.sootoo.com/tag/24/" target="_blank">移动互联网</a></li>
+            <li><a title="" href="http://www.sootoo.com/keyword/94631/" target="_blank">小西访谈室</a></li>
+            <li><a title="" href="http://www.sootoo.com/tag/zt/151/" target="_blank">速途网探营</a></li>
+            <li class="nav-border"><a href="#" target="_blank">更多</a></li>
+        </ul>
+        <ul class="header-top-r clearfix">
+
+         <li class="hidden-top" style="margin-top:4px;"><wb:follow-button uid="1667925927" type="red_2" width="136" height="24"><iframe marginheight="0" scrolling="no" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/followbutton.html" frameborder="0" height="24" width="136"></iframe></wb:follow-button></li>
+          
+              <li class="hidden-top" style="margin-top:7px;"><a href="http://www.sootoo.com/user/login/" target="_blank">登录</a> |</li>
+              <li class="hidden-top" style="margin-top:7px;"><a href="http://www.sootoo.com/user/register/" target="_blank">注册</a> |</li>
+              <li class="hidden-top" style="margin-top:7px;"><a href="http://www.sootoo.com/feeds/tag/5/" target="_blank">订阅</a></li>
+                     
+
+          <li class="hidden-top"><a href="http://www.sootoo.com/feeds/tag/5/"><span class="bg_rss" style="cursor:pointer;"></span></a></li>
+        </ul>
+
+        </div>
+        <div class="header-log clearfix">
+          <a href="http://www.sootoo.com/" class="Log"><img src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/logo_sootoo.gif"></a>
+
+          <!-- 广告位：内容页顶部 --> 
+<script type="text/javascript">BAIDU_CLB_SLOT_ID = "980576";</script> 
+<script type="text/javascript" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/o.js"></script><div id="BAIDU_SSP__wrapper_980576_0"></div><script charset="utf-8" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom"></script><script type="text/javascript">
+    /*960*60 创建于 2014-09-23*/
+    var cpro_id = "u1730304";
+</script>
+<script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/c.js" type="text/javascript"></script><div id="BAIDU_SSP__wrapper_u1730304_0"><iframe id="iframeu1730304_0" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom.html" vspace="0" hspace="0" marginwidth="0" marginheight="0" scrolling="no" style="border:0; vertical-align:bottom;margin:0;" allowtransparency="true" frameborder="0" height="60" width="960" align="center,center"></iframe></div>
+
+        </div>
+  </div>                                                               
+
+     
+                                                            <!--  header   -->
+    <div class="main-content clearfix">
+
+      <!--////////////////////////////////////////////////////////////////////////////                 主体 左侧                     ///////////////////////////////////////////////////////////////////////////////////////////-->
+    
+      <style>
+      .searchlist ul li{
+        width: 75px;
+        height: 30px;
+        float: left;
+        padding-left:11px;
+        padding-top: 5px;
+        background: url("http://www.sootoo.com/son_media/t14/img/u178.png")right 0 no-repeat;
+      }
+      .searchlist ul li a{
+        color: #333333;
+        width:100%;
+        display: inline-block;
+        text-align: center;
+      }
+      </style>
+
+     
+      <!--////////////////////////////////////////////////////////////////////////////                 主体 中心                     ///////////////////////////////////////////////////////////////////////////////////////////-->
+    <div id="wx_share_param" style="display:none">
+        <li id="wchat_title">Linux下EPoll通信模型简析</li>
+        <li id="wchat_desc">　　简介：
+　　EPoll基于I/O的事件通知机制，由系统通知用户那些SOCKET触发了那些相关I/O事件，事件中包含对…</li>
+        <li id="wchat_link">http://www.sootoo.com/content/324757.shtml</li>
+        <li id="wchat_imgUrl">http://www.sootoo.com/son_media/msg/2012/08/10/352153.png</li>
+    </div>
+<script type="text/javascript">
+        $('#wchat_link').html(document.location.href);
+        if($('#wchat_imgUrl').html()==""){
+          $('#wchat_imgUrl').html("http://www.sootoo.com/son_media/t14/img/logo_sootoo.gif");
+        }
+</script>
+      <div class="main-content-left">
+        <div class="l_img"><span>今日焦点</span></div>
+        <div class="today-foucs">
+          <!-- widget:714 last_update:2016-03-18 09:30:04.680686 -->
+
+<a href="http://www.sootoo.com/content/661848.shtml" target="_blank" class="img"><img class="JIATHIS_IMG_NO" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/725606.jpg"></a>
+<a href="http://www.sootoo.com/content/661848.shtml" target="_blank" class="text">还记得红遍网络的机器人吗？谷歌要卖了</a>
+
+
+
+
+          
+        </div>
+        <div class="near-new">
+          <div class="l_img"><span>最近更新</span></div>
+          <ul>
+            <!-- widget:713 last_update:2016-03-18 21:06:02.052921 --><li><em></em><a href="http://www.sootoo.com/content/661880.shtml">为什么女生陪玩就“一定是”肮脏交易？</a></li><li><em></em><a href="http://www.sootoo.com/content/661879.shtml">楚楚街移动客户端安装量超过1亿</a></li><li><em></em><a href="http://www.sootoo.com/content/661878.shtml">盖娅互娱收购王彦直旗下四公司 两家转让价1美元</a></li><li><em></em><a href="http://www.sootoo.com/content/661877.shtml">阿里妈妈发布垂直媒体“万有引力”计划</a></li><li><em></em><a href="http://www.sootoo.com/content/661876.shtml">小米和乐心将推大屏智能手表 迎战苹果、fitbit？</a></li><li><em></em><a href="http://www.sootoo.com/content/661875.shtml">申通：将联合淘宝严打第三方刷单公司</a></li><li><em></em><a href="http://www.sootoo.com/content/661874.shtml">蔡文胜：创业者如何能拿到投资</a></li><li><em></em><a href="http://www.sootoo.com/content/661873.shtml">联想大调整：重组四大集团 陈旭东改任联席总裁</a></li>
+
+
+          </ul>
+        </div>
+        <div class="near-what">
+          <div class="l_img l_img_s"><span>附近人在搜什么</span></div>
+          <div class="list clearfix searchlist" style="height: auto;margin-top: 10px;padding:0;">
+            <!-- widget:700 last_update:2016-03-19 13:47:53.749677 --><ul class="hotTags-xs">
+    
+    <li><a href="http://www.sootoo.com/keyword/138842/">科技圈</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/124318/">闪迪</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/131589/">西数</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/17183/">夏普</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/5506/">富士康</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/32679/">iOS</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/1767/">WIFI</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/126580/">饿了么</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/271585/">李世石</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/61929/">O2O</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/221330/">iPhone7</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/1536/">甲骨文</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/181399/">富智康</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/221818/">防丢</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/271670/">儿童手表</a></li>
+    
+    <li><a href="http://www.sootoo.com/keyword/62991/">小牛</a></li>
+    
+</ul>
+          </div>
+        </div>
+      </div>
+      <div class="main-content-center">
+                        <div class="center-research-t">
+                          当前位置： <a href="http://www.sootoo.com/" target="_self" style="color:#888;">速途网</a><span class="bg_s_arrowr"> &gt;</span>
+                        <a style="color:#888;" target="_self" href="http://www.sootoo.com/tag/116/">业界</a>
+                        <span id="idauthor"></span>
+
+                        <div class="center-article set_width">
+                          <div style="padding:10px 0;">
+                            <div style="float:right;">
+                              
+                            </div>
+                            <!--tit-->
+                            <div style="margin:5px 0px 10px 0px;line-height:44px;text-align:center;"><h1 style="font-family:" arial","microsoft="" yahei";"="">Linux下EPoll通信模型简析</h1></div>
+                            <!--end tit-->
+                            <!--info-->
+                            <div class="t11_info"><hr style="width:90%;height:1px;color:#ccc;opacity:0.3;filter:alpha(opacity=30);-moz-opacity:0.3;-khtml-opacity: 0.3;margin-left:30px">
+                            <div style="font-size:12px;color:#888;text-align:center;padding:10px 0;">
+                              作者:&nbsp;<a style="color:#3A60A7;" href="http://www.sootoo.com/keyword/1501/">佚名</a> 
+                              发布:&nbsp;<a style="color:#3A60A7;" href="http://www.sootoo.com/user/378/">周勇</a> 
+                       &nbsp;<span title="发布日期 八月 10, 2012, 3:12 p.m.">2012年08月10日15:12</span>
+                              &nbsp;来源:&nbsp;<a style="color:#3A60A7;" href="http://www.sootoo.com/keyword/5938/">中国IT实验室</a>
+                        <a style="color:#3A60A7;" target="_self" href="#t11_wypl">我要评论</a>(<span style="color:#9D1112;margin:5px;">0</span>)
+                      </div><div style="float:right;width:300px"></div>
+                      </div>
+                      <!--end info-->
+                  <script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/jquery.js" type="text/javascript"></script>
+                      <!--content-->
+                  <div id="content" class="t11_mlblk t11_contentarea" style="border-bottom:1px dotted #C1D9F3;">　　简介：<p></p>
+<p>　　EPoll基于I/O的事件通知机制，由系统通知用户那些SOCKET触发了那些相关I/O事件，事件中包含对应的文件描述符以及事件类型，这
+样应用程序可以针对事件以及事件的source做相应的处理(Acception,Read,Write,Error)。相比原先的SELECT模型(用
+户主动依次检查SOCKET)，变成被动等待系统告知处于活跃状态的SOCKET,性能提升不少(不需要依次遍历所有的SOCKET,而只是对活跃
+SOCKET进行事件处理)。</p>
+<p>　　基本步骤：</p>
+<p>　　擅长对大量并发用户的请求进行及时处理，完成服务器与客户端的数据交互。一个简单实现步骤如下：</p>
+<p>　　(1) 创建侦听socket:ListenSock,将该描述符设定为非阻塞模式，调用Listen()函数在该套接字上侦听连接请求。</p>
+<p>　　(2) 使用epoll_create()函数创建文件描述，设定可管理的最大socket描述符数目。</p>
+<p>　　(3) 将ListenSock注册进EPoll中进行监测</p>
+<p>　　(4) EPoll监视启动，epoll_wait()等待epoll事件发生。</p>
+<p>　　(5)如果epoll事件表明有新的连接请求，则调用accept()函数，并将新建立连接添加到EPoll中。若为读写或者报错等，调用对应的Handle进行处理。</p>
+<p>　　(6) 继续监视，直至停止。</p>
+<p>　　通信主体框架：</p>
+<p align="center"><img alt="" data-original="http://p.sootoo.com/son_media/msg/2012/08/10/352153.png" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/626380.gif" height="476" width="449">
+<noscript><IMG alt="" src="http://p.sootoo.com/son_media/msg/2012/08/10/352153.png" width=449 height=476></noscript></p>
+<p>　　注：上诉过程只是一个简单的线性实例，在实际的应用过程中，为了提高监视效率，常常将EPOLL监听到的事件交给其他专门的任务线程进行处理，以提高EPoll监视的效率。</p>
+<p>　　主要涉及API</p>
+<p>　　1.EPoll创建</p>
+<p>　　int epoll_create(int size)</p>
+<p>　　该函数生成一个epoll专用文件描述符，其中的参数是指定生成描述符的最大范围。在linux-2.4.32内核中根据size大小初始化哈希表的大小，在linux2.6.10内核中该参数无用，使用红黑树管理所有的文件描述符，而不是hash.</p>
+<p>　　2、epoll_ctl函数</p>
+<p>　　int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)</p>
+<p>　　该函数用于控制某个文件描述符上的事件，可以注册事件，修改事件，删除事件。</p>
+<p>　　参数：epfd:由 epoll_create 生成的epoll专用文件描述符;</p>
+<p>　　op:操作类型，有如下取值：</p>
+<p>　　EPOLL_CTL_ADD 注册、</p>
+<p>　　EPOLL_CTL_MOD 修改、</p>
+<p>　　EPOLL_CTL_DEL 删除</p>
+<p>　　fd:要控制的文件描述符;</p>
+<p>　　event:指向epoll_event的指针; 如果调用成功返回0,不成功返回-1</p>
+<p>　　epoll_event 结构体的events字段是表示感兴趣的事件，取值为：</p>
+<p>　　EPOLLIN:表示对应的文件描述符可以读;</p>
+<p>　　EPOLLOUT:表示对应的文件描述符可以写;</p>
+<p>　　EPOLLPRI:表示对应的文件描述符有紧急的数据可读;</p>
+<p>　　EPOLLERR:表示对应的文件描述符发生错误;</p>
+<p>　　EPOLLHUP:表示对应的文件描述符被挂断;</p>
+<p>　　EPOLLET:表示对应的文件描述符有事件发生;</p>
+<p>　　3、事件等待函数</p>
+<p>　　int epoll_wait(int epfd,struct epoll_event * events,int maxevents,int timeout)</p>
+<p>　　该函数用于轮询I/O事件的发生;</p>
+<p>　　参数： epfd:由epoll_create 生成的epoll专用的文件描述符;</p>
+<p>　　epoll_event:用于回传等待处理的事件数组;</p>
+<p>　　maxevents:每次能处理的事件数;</p>
+<p>　　timeout:等待I/O事件发生的超时值(ms);-1永不超时，直到有事件产生才触发，0立即返回</p>
+<p>　　主要数据结构：</p>
+<p>　　typedef union epoll_data {</p>
+<p>　　void *ptr;</p>
+<p>　　int fd;</p>
+<p>　　__uint32_t u32;</p>
+<p>　　__uint64_t u64;</p>
+<p>　　} epoll_data_t;</p>
+<p>　　struct epoll_event {</p>
+<p>　　__uint32_t events; /* Epoll events */</p>
+<p>　　epoll_data_t data; /* User data variable */</p>
+<p>　　};</p>
+<p>　　一般我们在编程时，利用event变量存储事件对应的文件描述符以及事件类型。</p>
+<p>　　实例代码</p>
+<p>　　服务器段代码</p>
+<p>　　int EPollServer()</p>
+<p>　　{</p>
+<p>　　int srvPort = 6888;</p>
+<p>　　initSrvSocket(srvPort);</p>
+<p>　　/* 创建 epoll 句柄，把监听socket加入到epoll集合里 */</p>
+<p>　　epollfd = epoll_create(MAX_EVENTS);</p>
+<p>　　struct epoll_event event;</p>
+<p>　　event.events = EPOLLIN | EPOLLET;</p>
+<p>　　event.data.fd = srvfd;</p>
+<p>　　if ( epoll_ctl(epollfd, EPOLL_CTL_ADD, srvfd, &amp;event) &lt; 0 )</p>
+<p>　　{</p>
+<p>　　printf(“epoll Add Failed: fd=%d\n”, srvfd);</p>
+<p>　　return -1;</p>
+<p>　　}</p>
+<p>　　printf( “epollEngine startup:port %d”, srvPort);</p>
+<p>　　while(1)</p>
+<p>　　{</p>
+<p>　　/*等待事件发生*/</p>
+<p>　　int nfds = epoll_wait(epollfd, eventList, MAX_EVENTS, -1);</p>
+<p>　　if ( nfds == -1 )</p>
+<p>　　{</p>
+<p>　　printf( “epoll_wait” );</p>
+<p>　　continue;</p>
+<p>　　}</p>
+<p>　　/* 处理所有事件 */</p>
+<p>　　int n = 0;</p>
+<p>　　for (; n &lt; nfds; n++)</p>
+<p>　　handleEvent(eventList + n);</p>
+<p>　　}</p>
+<p>　　close(epollfd);</p>
+<p>　　close(srvfd);</p>
+<p>　　};</p>
+<p>　　在事件处理handleEvent中(分为连接事件处理以及数据接收发送事件)</p>
+<p>　　void handleEvent(struct epoll_event* pEvent)</p>
+<p>　　{</p>
+<p>　　if (pEvent-&gt;data.fd == srvfd)</p>
+<p>　　{</p>
+<p>　　AcceptConn(srvfd);</p>
+<p>　　}else{</p>
+<p>　　RecvData(pEvent-&gt;data.fd);</p>
+<p>　　SendData(pEvent-&gt;data.fd);</p>
+<p>　　epoll_ctl(epollfd, EPOLL_CTL_DEL, pEvent-&gt;data.fd, pEvent);</p>
+<p>　　}</p>
+<p>　　}</p>
+<p>　　//从标准输入读取数据，发送给服务器端，服务器端在原样返回，客户端再接收并予以显示</p>
+<p>　　void handle(int sockfd)</p>
+<p>　　{</p>
+<p>　　char sendline[MAXLINE];</p>
+<p>　　char recvline[MAXLINE];</p>
+<p>　　int n;</p>
+<p>　　for (;;) {</p>
+<p>　　if (fgets(sendline, MAXLINE, stdin) == NULL)</p>
+<p>　　break;</p>
+<p>　　if (read(STDIN_FILENO, sendline, MAXLINE) == 0)</p>
+<p>　　break;</p>
+<p>　　n = write(sockfd, sendline, strlen(sendline));</p>
+<p>　　n = read(sockfd, recvline, MAXLINE);</p>
+<p>　　if (n == 0) {</p>
+<p>　　printf(“echoclient: server terminated prematurely\n”);</p>
+<p>　　break;</p>
+<p>　　}</p>
+<p>　　write(STDOUT_FILENO, recvline, n);</p>
+<p>　　//如果用标准库的缓存流输出有时会出现问题</p>
+<p>　　//fputs(recvline, stdout);</p>
+<p>　　}</p>
+<p>　　}</p>
+<p>　　运行结果(Linux下截图麻烦，直接复制控制台结果)</p>
+<p>　　客户端：</p>
+<p>　　administrator@ubuntu:~$ ./echoclient</p>
+<p>　　welcome to echoclient</p>
+<p>　　123456</p>
+<p>　　123456</p>
+<p>　　服务器端：</p>
+<p>　　administrator@ubuntu:~/source/EPollProject$ ./EPoll</p>
+<p>　　epollEngine startup port 6888</p>
+<p>　　handleEvent function, HANDLE: 3, EVENT is 1</p>
+<p>　　Accept Connection: 5</p>
+<p>　　handleEvent function, HANDLE: 5, EVENT is 1</p>
+<p>　　RecvData function</p>
+<p>　　SOCKET HANDLE: 5: CONTENT: 123456</p>
+<p>　　content is 123456</p>
+<p>　　SendData function</p>
+<p>　　SendData: 123456</p>
+<p>　　注：</p>
+<p>　　1.此处只是学习了EPoll基本模型，在实际应用中，为了提高EPoll模型的监视效率，一般在监视线程中只做监视，不过事件处理工作，而是将事件交付其他线程处理。</p>
+<p>　　2. 为了提高事件处理的效率，所以我们尽量避免在有事件时开辟线程处理，处理完关闭，一般在系统启动时会创建线程池，将事件交与线程池中的空闲线程进行处理。在事件的处理过程中不会有县城的创建、销毁等操作。效率也提高了。</p>
+
+                  </div>
+                  <!--end content-->
+
+                     
+
+              </div>
+                    <div style="border-bottom:1px solid #C1D9F3;width:100%;float:left;margin-bottom:10px">
+                  
+                    <div style="float:left;height:20px;font-size: 12px;padding: 5px 0;width:510px;overflow:hidden;;white-space:nowrap">
+                          <conthide><span style="color:#202020;font-family: " microsoft="" yahei",arial,tahoma,宋体,sans-serif;"="">分类</span>：&nbsp;
+                          <strong><a style="color:#333;" href="http://www.sootoo.com/tag/116/">业界</a></strong>&nbsp;&nbsp;
+                          <span style="color:#202020;">用户</span>：&nbsp;
+                          <a style="margin-right:5px;color:#333;" href="http://www.sootoo.com/user/378/">周勇</a>    &nbsp;&nbsp;
+                          </conthide>
+                          
+                              <span style="color:#202020;">关键词</span>：
+                                  <a style="margin:0px 8px;color:#333;" href="http://www.sootoo.com/keyword/13304/">模型</a>
+                                  
+                                  <a style="margin:0px 8px;color:#333;" href="http://www.sootoo.com/keyword/831/">通信</a>
+                                  
+                                  <a style="margin:0px 8px;color:#333;" href="http://www.sootoo.com/keyword/9207/">Linux</a>
+                                  
+                                  
+                                  
+                    </div>
+              <p class="jiathis_hide">
+              <!-- JiaThis Button BEGIN --> 
+              </p><div class="jiathis_style"> 
+                <a title="复制网址" class="jiathis_button_copy"><span class="jiathis_txt jiathis_separator jtico jtico_copy">复制网址</span></a> 
+                <a title="加入收藏夹" class="jiathis_button_fav"><span class="jiathis_txt jiathis_separator jtico jtico_fav">收藏</span></a> 
+                <a title="打印" class="jiathis_button_print"><span class="jiathis_txt jiathis_separator jtico jtico_print">打印</span></a> 
+                <a title="分享到邮件" class="jiathis_button_email"><span class="jiathis_txt jiathis_separator jtico jtico_email">邮件</span></a> 
+                <a title="分享到微信" class="jiathis_button_weixin"><span class="jiathis_txt jiathis_separator jtico jtico_weixin">微信</span></a> 
+                <a title="分享到新浪微博" class="jiathis_button_tsina"><span class="jiathis_txt jiathis_separator jtico jtico_tsina">新浪微博</span></a> 
+                <a title="分享到一键分享" class="jiathis_button_ishare"><span class="jiathis_txt jiathis_separator jtico jtico_ishare">一键分享</span></a> 
+                <a title="分享到QQ好友" class="jiathis_button_cqq"><span class="jiathis_txt jiathis_separator jtico jtico_cqq">QQ</span></a> 
+                <a href="http://www.jiathis.com/share?uid=1967350" class="jiathis jiathis_txt jiathis_separator jtico jtico_jiathis" target="_blank">更多</a> 
+                <a class="jiathis_counter_style"><span title="累计分享3次" id="jiathis_counter_66" class="jiathis_button_expanded jiathis_counter jiathis_bubble_style">3</span></a> 
+              </div> 
+              <script type="text/javascript">
+                // var oContent_imgs = document.getElementsByTagName('img');
+                // for(var i=0;i<oContent_imgs.length;i++){
+                //   oContent_imgs[i].style.className = 'JIATHIS_IMG_NO';
+                // }
+                
+                // var oContent = document.getElementById('content');
+                // var oContent_img = oContent.getElementsByTagName('img')[0];
+                // oContent_img.style.className = 'JIATHIS_IMG_OK';
+                var jiathis_config = {
+                  //url:"http://www.jiathis.com",
+                  showClose:false,
+                  sm:"copy,t163,email,tsina,tqq,cqq",
+                  imageUrl:"http://www.sootoo.com/son_media/msg/2012/08/10/352153.png",
+                  url:document.location.href,
+                  title:"Linux下EPoll通信模型简析",
+                  summary:"Linux下EPoll通信模型简析",
+                  pic:"http://www.sootoo.com/son_media/msg/2012/08/10/352153.png",
+                  data_track_clickback:true
+                };
+              </script> 
+              <script type="text/javascript" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/jia.js" charset="utf-8"></script><script type="text/javascript" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/plugin.js" charset="utf-8"></script> 
+              <!-- JiaThis Button END -->
+              <p></p>
+              <script type="text/javascript">
+                  /*610*90 创建于 2014-09-28*/
+                  var cpro_id = "u1738176";
+              </script>
+              <script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/c.js" type="text/javascript"></script><div id="BAIDU_SSP__wrapper_u1738176_0"><iframe id="iframeu1738176_0" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom_002.html" vspace="0" hspace="0" marginwidth="0" marginheight="0" scrolling="no" style="border:0; vertical-align:bottom;margin:0;" allowtransparency="true" frameborder="0" height="90" width="610" align="center,center"></iframe></div>
+              <script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/c.js" type="text/javascript"></script>
+                    <div class="share-code">
+                    <script type="text/javascript">
+                      $(function(){$('.share-code').parent().parent().addClass('set_width')});
+                    </script>
+                      <div class="t11_mlblk">
+                        <!-- Duoshuo Comment BEGIN -->
+                        <div class="ds-thread" data-thread-key="324757"></div>
+                        
+                        <script type="text/javascript">
+                          var duoshuoQuery = {short_name:"sootoo"};
+                          (function() {
+                            var ds = document.createElement('script');
+                            ds.type = 'text/javascript';ds.async = true;
+                            ds.src = 'http://static.duoshuo.com/embed.js';
+                            ds.charset = 'UTF-8';
+                            (document.getElementsByTagName('head')[0] 
+                            || document.getElementsByTagName('body')[0]).appendChild(ds);
+                          })();
+                        </script>
+                        <!-- Duoshuo Comment END -->
+                      </div>
+                      <div class="t11_mlblk" style="border:1px solid #d5e2f3;">
+                        <div style="margin-left:10px;">
+                        </div>
+                      </div>
+                    </div>
+                    <div class="about-article">
+                      <div style="padding:0px;">
+                        <div class="about-article">
+                          <p class="t11_sidespan" style="margin-top: -3px;">相关文章</p>
+                        </div>
+                        <ul class="article-list">
+                          
+                          <li>
+                            <a target="_blank" href="http://www.sootoo.com/content/526613.shtml">谷歌升级流感趋势模型 加强预测准确性<span color="#cc0000">(1)</span></a>
+                          </li>
+                          
+                          <li>
+                            <a target="_blank" href="http://www.sootoo.com/content/486661.shtml">支付安全雷达模型：互联网支付宝最佳<span color="#cc0000">(1)</span></a>
+                          </li>
+                          
+                          <li>
+                            <a target="_blank" href="http://www.sootoo.com/content/459577.shtml">马斯克“超级高铁”计划进展：2015年推出模型<span color="#cc0000">(1)</span></a>
+                          </li>
+                          
+                          <li>
+                            <a target="_blank" href="http://www.sootoo.com/content/459302.shtml">手机模型成学生“顶包”神器<span color="#cc0000">(1)</span></a>
+                          </li>
+                          
+                          <li>
+                            <a target="_blank" href="http://www.sootoo.com/content/455322.shtml">苹果新总部巨型沙盘模型公之于众<span color="#cc0000">(1)</span></a>
+                          </li>
+                          
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  </div>
+                  </div>
+      </div>
+      <!--////////////////////////////////////////////////////////////////////////////                 主体 右侧                     ///////////////////////////////////////////////////////////////////////////////////////////-->
+    <div class="main-content-right">
+      <script type="text/javascript">BAIDU_CLB_SLOT_ID = "979260";</script> 
+      <script type="text/javascript" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/o.js"></script><div id="BAIDU_SSP__wrapper_979260_0"></div><script charset="utf-8" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom_004"></script><script type="text/javascript">
+    /*300*250，创建于2013-9-28*/
+    var cpro_id = "u1377269";
+</script>
+<script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/c.js" type="text/javascript"></script><div id="BAIDU_SSP__wrapper_u1377269_0"><iframe id="iframeu1377269_0" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/ecom_003.html" vspace="0" hspace="0" marginwidth="0" marginheight="0" scrolling="no" style="border:0; vertical-align:bottom;margin:0;" allowtransparency="true" frameborder="0" height="250" width="300" align="center,center"></iframe></div> 
+      <!-- <div class="foucs-gz" id="foucs-gz">
+        <div class="p_d"><span>焦点关注</span></div>
+        <ul>
+          
+        </ul>
+      </div> -->
+      <!-- widget:705 last_update:2016-03-19 12:54:26.090064 -->
+<div class="foucs-gz" id="foucs-gz">
+        <div class="p_d"><span>焦点关注</span></div>
+        <ul>
+<li><em style="color: rgb(148, 25, 25);">1</em><a href="http://www.sootoo.com/content/661835.shtml">人类禁不住颤抖，人工智能已经超越人类了吗?</a></li><li><em style="color: rgb(168, 53, 53);">2</em><a href="http://www.sootoo.com/content/661848.shtml">还记得红遍网络的机器人吗？谷歌要卖了</a></li><li><em style="color: rgb(187, 77, 77);">3</em><a href="http://www.sootoo.com/content/661861.shtml">宅男们，你们想要的“VR社交”在这里</a></li><li><em style="color: rgb(102, 102, 102);">4</em><a href="http://www.sootoo.com/content/661869.shtml">VR体验当场晕倒 写稿前仍有呕吐感</a></li><li><em style="color: rgb(102, 102, 102);">5</em><a href="http://www.sootoo.com/content/661842.shtml">中移动向铁塔公司转让资产获利101亿元</a></li><li><em style="color: rgb(102, 102, 102);">6</em><a href="http://www.sootoo.com/content/661838.shtml">2015年上海网游产值同比增18.4%  游族成IP跨界代</a></li><li><em style="color: rgb(102, 102, 102);">7</em><a href="http://www.sootoo.com/content/661845.shtml">OPPO发布R9/R9 Plus：全金属机身 主打自拍</a></li><li><em style="color: rgb(102, 102, 102);">8</em><a href="http://www.sootoo.com/content/661876.shtml">小米和乐心将推大屏智能手表 迎战苹果、fitbit？</a></li><li><em style="color: rgb(102, 102, 102);">9</em><a href="http://www.sootoo.com/content/661875.shtml">申通：将联合淘宝严打第三方刷单公司</a></li><li><em style="color: rgb(102, 102, 102); padding-right: 4px;">10</em><a href="http://www.sootoo.com/content/661847.shtml">包装盒曝光 苹果新机确认叫iPhone SE</a></li>
+</ul>
+      </div>
+<script type="text/javascript">
+var oGz = document.getElementById('foucs-gz');
+var aEm = oGz.getElementsByTagName('em');
+var num = 1;
+for (var i = 1; i < aEm.length+1; i++) {
+	aEm[i-1].innerHTML = num;
+	aEm[i-1].style.color = '#666';
+	num++;
+};
+	aEm[0].style.color='#941919';
+	aEm[1].style.color='#a83535';
+	aEm[2].style.color='#bb4d4d';
+	aEm[9].style.paddingRight = '4px';
+</script>
+
+      <div class="xiaoxi-talk main-content-r-topic">
+      <div class="p_d"><a href="http://www.sootoo.com/keyword/94631/" target="_blank">小西访谈</a></div>
+        <!-- widget:711 last_update:2016-03-18 11:28:10.982066 --> 
+  
+    <a target="_blank" href="http://www.sootoo.com/content/661861.shtml"><img class="JIATHIS_IMG_NO" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/725637.jpg"></a>
+  
+      </div>
+      <div class="famous main-content-r-topic">
+        <div class="p_d"><a href="http://www.sootoo.com/tag/zt/151/" target="_blank">名企探营</a></div>
+        <!-- widget:712 last_update:2015-10-08 15:56:25.333220 -->
+
+	<a href="http://www.sootoo.com/content/656974.shtml" target="_blank">
+		<img class="u3-one-img JIATHIS_IMG_NO" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/715390_s300x200.jpg" alt="“沙米”探营记：敢在沙漠里种大米 没什么事是不能想的">
+	</a>
+
+      </div>
+      <!-- <div class="main-content-r-video" style="POSITION: relative">
+<div class="video-t"><a href="http://www.sootoo.com/content/edit/513495/#">STV</a></div>
+<div style="FONT-SIZE: 14px; HEIGHT: 15px; FONT-FAMILY: 'Microsoft YaHei','Arial Narrow'; POSITION: absolute; FONT-WEIGHT: bold; COLOR: rgb(0,0,0); TEXT-ALIGN: center; LEFT: 0px; Z-INDEX: 555; LINE-HEIGHT: 15px; TOP: 15px; WIDTH: 300px">网媒是否该取消总编辑岗位</div><embed type="application/x-shockwave-flash" align="middle" height="250" width="300" src="http://swf.adtchrome.com/loader.swf?VideoIDS=XOTI4OTU4ODky/v.swf" allowscriptaccess=" always" =""="" quality="high" allowfullscreen="true" style="display: block;"> 
+<ul class="video-b clearfix">
+<li class="video-b-l"><a title="" href="http://www.sootoo.com/content/560920.shtml" target="_blank"><img style="HEIGHT: 62px; WIDTH: 142px" src="http://p.sootoo.com/son_media/msg/2015/04/10/701423.jpg"> </a>
+<p align="center"><a title="" href="http://www.sootoo.com/content/560920.shtml" target="">新仙剑手游来袭
+</a> </p></li>
+<li class="video-b-r"><a title="" href="http://www.sootoo.com/content/560921.shtml" target="_blank"><img style="HEIGHT: 62px; WIDTH: 142px" src="http://p.sootoo.com/son_media/msg/2015/04/10/701424.png" width="749"> </a>
+<p align="center"><a title="" href="http://www.sootoo.com/content/560921.shtml" target="">手疾眼快见缝插针
+</a></p></li></ul></div> -->
+      <div class="main-content-r-topic">
+        <div class="p_d"><a href="http://www.sootoo.com/zt/list/" target="_blank">专题</a></div>
+                    	<a href="http://www.sootoo.com/zt243/" target="_blank"><img src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/713424.jpg" style="width:100%;height:120px;"></a>
+            	<a href="http://www.sootoo.com/zt245/" target="_blank"><img src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/713879.jpg" style="width:100%;height:120px;"></a>
+				<a href="http://www.sootoo.com/zt244/" target="_blank"><img src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/713425.gif" style="width:100%;height:120px;"></a>
+            	
+            	
+      </div>
+    </div>
+  </div>
+    
+<script type="text/javascript">
+//     $(function(){
+// $(".share-code").width(100%);
+// });
+    $(function(){
+      $('img').lazyload({ 
+        effect:'fadeIn' 
+      });
+    });
+</script>
+
+
+        
+   <!--////////////////////////////////////////////////////////////////////////////                 尾部                      ///////////////////////////////////////////////////////////////////////////////////////////-->
+    <div class="footer">
+        <p class="footer-ds"><a style="color:#ccc;" title="" href="http://ec.sootoo.com/" target="_blank">电商</a> 
+<a style="color:#ccc;" title="" href="http://www.sootoo.com/tag/18/" target="_blank">手游</a> 
+<a style="color:#ccc;" title="" href="http://www.sootoo.com/tag/24/" target="_blank">移动互联网</a>
+<a style="color:#ccc;" title="" href="http://www.sootoo.com/keyword/202360/" target="_blank">智能硬件</a>
+<a style="color:#ccc;" title="" href="http://www.sootoo.com/keyword/135063/" target="_blank">互联网金融</a></p>
+        <div class="footer-cont clearfix">
+            <div class="footer-read">
+                <p class="footer-head">延伸阅览</p>
+                <p><a href="http://www.sootoo.com/content/stauthor/" target="_blank">原创报道</a><br><a href="http://www.sootoo.com/zt80/" target="_blank">蓝海沙龙</a><br class="footer_hide_now"><a class="footer_hide_now" href="#" target="_blank">游戏沙龙</a><br><a href="http://www.sootoo.com/keyword/3979/" target="_blank">走进物联网</a><br><a class="footer_hide_now" href="http://www.vmeti.com/about" target="_blank">与三千万微信粉丝分享</a><br class="footer_hide_now"><a class="footer_hide_now" href="#" target="_blank">智能硬件：极地特工微信群</a></p>
+            </div>
+            <div class="footer-sec clearfix">
+                <p class="footer-head">速途网<span>&nbsp;+</span></p>
+                <p class="footer-st"><a href="http://www.sootoo.com/about/31/" target="_blank">关于速途网</a><br class="hidden"><a href="http://www.sootoo.com/about/32/" target="_blank">管理团队</a><br class="hidden"><a class="footer_hide_now" href="http://www.sootoo.com/keyword/136/" target="_blank">速途动态</a><br class="footer_hide_now"><a href="http://www.sootoo.com/about/33/" target="_blank">大事记</a><br class="hidden"><a class="footer_hide_now" href="#" target="_blank">获奖记录</a><br class="footer_hide_now"><a href="http://www.sootoo.com/about/35/" class="hidden-footer" target="_blank">联系我们</a></p>
+                <p class="footer-st1"><a href="http://www.sootoo.com/about/34/" target="_blank">寻求报道</a><br class="hidden"><a href="http://www.sootoo.com/about/3/" target="_blank">招聘</a><br class="hidden"><a href="http://www.sootoo.com/about/4/" target="_blank">广告投放</a><br class="footer_hide_now hidden"><a class="footer_hide_now" href="mailto:news@sootoo.com" target="_blank">产品体验、评测</a><br class="footer_hide_now"><a class="footer_hide_now" href="http://www.sootoo.com/about/4/" target="_blank">微信营销</a>&nbsp;&nbsp;<a href="http://www.sootoo.com/sitemap/" target="_blank">导航</a></p>
+            </div>
+            <div class="footer-partner">
+                <p class="footer-head">合作伙伴</p>
+                <p><a href="http://www.vmeti.com/opcc" target="_blank">中国互联网开放平台研究中心（OPCC）</a><br><a href="http://www.vmeti.com/" target="_blank">中国最大的自媒体联盟-微媒体联盟</a><br><a href="https://www.upyun.com/index.html?md=sootoo" target="_blank">静态数据存储</a></p>
+            </div>
+            <div class="footer-four clearfix">
+                <p class="footer-head">多屏阅读</p>
+                <p class="footer-more"><a href="http://weixin.sogou.com/gzh?openid=oIWsFt18f3yN4ICy82oy26y0dsaQ" class="fetion" target="_blank">微信阅读</a><br><a href="#" class="friend footer_hide_now" target="_blank">微信朋友圈</a><br class="footer_hide_now"><a href="http://e.t.qq.com/sootoo2010" class="q-weibo" target="_blank">腾讯微博</a><br><a href="#" class="q-space footer_hide_now" target="_blank">QQ空间</a><br class="footer_hide_now"><a href="http://weibo.com/sootoo" class="xl-weibo" target="_blank">新浪微博</a><br><a href="http://www.sootoo.com/feeds/tag/5.xml" target="_blank" class="rss">RSS</a><br class="footer_hide_now"><a href="#" class="e-mail footer_hide_now" target="_blank">邮件订阅</a></p>
+                <p class="footer-more1"><a href="#" class="search footer_hide_now" target="_blank">百度搜索</a><br class="footer_hide_now"><a href="#" class="share footer_hide_now" target="_blank">人人分享</a><br class="footer_hide_now"><a href="http://t.163.com/4954032069" class="wy-weibo" target="_blank">网易微博</a></p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+          <a href="http://www.sootoo.com/" class="bottom-log" target="_blank"><img src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/logo_sootoo_bottom.gif"></a>
+            <p class="research">Copyright ©2014 SooToo.com All rights <em>reserved. <span>速途传媒</span></em></p>
+<script type="text/javascript">var cnzz_protocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cspan id='cnzz_stat_icon_30041218'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "w.cnzz.com/c.php%3Fid%3D30041218' type='text/javascript'%3E%3C/script%3E"));</script><span id="cnzz_stat_icon_30041218"></span><script src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/c_002.js" type="text/javascript"></script>
+<p class="danwei">指导单位：中国互联网协会网络营销工作委员<em>会 ISO27001.w3c<br class="hidden">&nbsp;&nbsp;&nbsp;京ICP证110302号</em>&nbsp;&nbsp;&nbsp;<span class="jing">京</span><span><strong> ICP备05049258号-1<br class="hidden">&nbsp;&nbsp;&nbsp;&nbsp;京公网安备 </strong> <i>11010802013061号 </i></span></p>
+        </div>
+    </div>
+<style>
+.footer .friend_link{padding:5px 10px;border-bottom:1px solid #444;}
+.footer .friend_link a{color:#ccc;padding:0 5px;display:inline-block;font-size: 12px;line-height: 22px;}
+.footer-head{font:12px/18px "微软雅黑";color:#59d8d8;padding-bottom:4px; text-align:left;}
+.footer a:hover{color:#66d9ef;}
+.footer .footer_hide_now{display: none;}
+.footer .danwei .hidden{display:none;}
+</style>
+</div>
+<div style="display: none;" id="back-top">︿</div><script type="text/javascript" src="Linux%E4%B8%8BEPoll%E9%80%9A%E4%BF%A1%E6%A8%A1%E5%9E%8B%E7%AE%80%E6%9E%90-%E6%A8%A1%E5%9E%8B%20%E9%80%9A%E4%BF%A1%20Linux%20%E4%B8%9A%E7%95%8C-%E9%80%9F%E9%80%94%E7%BD%91_files/back_top.js"></script>
+
+</body></html>

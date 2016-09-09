@@ -1,0 +1,4 @@
+#include<semaphore.h>
+int sem_init(sem_t *sem,int pshared,unsigned value);
+----该函数将sem引用的无名信号量初始化为value,pshared可以为０或１;
+----成功则将sem初始化，返回０,否则返回-1并设置errno;

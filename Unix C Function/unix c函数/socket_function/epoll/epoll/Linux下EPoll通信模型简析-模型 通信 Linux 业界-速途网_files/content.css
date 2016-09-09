@@ -1,0 +1,192 @@
+@charset "utf-8";
+/* CSS Document */
+
+body, ol, ul, h1, h2, h3, h4, h5, h6, p, th, td, dl, dd, form, fieldset, legend, input, textarea, select,li,span,a{margin:0;padding:0;}
+body{font-size:12px;font-family:Helvetica, Tahoma, Arial, "Microsoft YaHei", "微软雅黑", SimSun, "宋体", Heiti, "黑体", sans-serif;background: #f7f7f7;}
+li{list-style:none;}
+a{text-decoration:none;}
+img{ vertical-align:top;border: 0;}
+i,em,strong{ font-style:normal;}
+
+.clearfix:after{content:".";display:block;height:0;clear:both;visibility:hidden} /*所有主流浏览器都支持 :after 伪元素。*/ 
+.clearfix{*+height:1%;}/*不知道有什么用处，不加ie7也没有问题*/ 
+.clearfix:after {visibility: hidden;display: block;font-size:0;co;line-height:tent;: " ";clear: both;height: 0;} 
+.clearfix{zoom:1;}
+
+.wrap{width:1200px;margin:0 auto; position:relative;background:#fff;}
+.header{width:1200px;}
+.header-top{padding:0 5px;background:#16acbd;height: 30px;}
+.header-top-l{float:left;}
+.header-top-l li{float:left;padding-left:5px;}
+.header-top-l li a{display:inline-block;color:#333;font-size:12px;line-height:30px; height:30px;}
+.header-top-l li a:hover{color:#fff;}
+.header-top-r{float:right;}
+.header-top-r li{float:left;padding-left:5px; color:#97dae1;}
+.header-top-r li a{color:#97DAE1; display:inline-block;}
+.header-top-r li a:hover{color:#fff;}
+#cproIframe_u1730304{position: absolute;left: 220px;top:30px;}
+
+.header-top-r li a img{width:16px;height:16px;padding:7px 5px 7px 5px;}
+.main-nav{height:14px;padding-left: 34px;padding-top: 8px;float: left;background:url("http://www.sootoo.com/son_media/t14/img/Spirit.png") 10px 0 no-repeat;}
+.main-nav li{float:left;}
+.main-nav .nav-border{border: none;}
+.main-nav li a{font-size:12px;line-height:14px; color:#97DAE1;border-right:1px solid #97DAE1;padding:0 5px;display:inline-block;}
+.main-nav li a:hover{color:#fff;}
+
+.jiathis_style{float: left;padding-top: 7px;}
+.wlw{display:none;}
+.jiathis_style-share{width:380px;}
+
+.header-log{height:116px;position: relative;}
+.header-log .Log{display: inline-block;width:150px;height: 62px;position: absolute;left: 32px;top: 32px;}
+.header-log .Log img{width:150px;height:62px}
+.header-log-banner{display: inline-block;width:960px;height: 90px;position: absolute;left: 232px;top: 18px;display: none;}
+.header-log-banner img{width:960px;height:90px;}
+
+
+
+
+.main-content{width:1200px;}
+.main-content-left,.main-content-center,.main-content-right{float:left;}
+.main-content-left{width:180px;padding:0 15px;}
+.main-content-center{width: 610px;padding:0 36px;}
+.main-content-right{width:300px;padding-right: 8px;}
+
+
+.main-content-left .l_img{font-size:12px;line-height:32px; height:32px;color: #333;border-bottom: 1px solid #ccc;font-weight: bold;}
+.main-content-left .l_img span{background: #e4e4e4;display: inline-block;width:60px;height:18px;font-size:14px;line-height:18px; font-weight: bold;}
+.main-content-left .today-foucs{width: 160px;height:137px;padding: 14px 10px 0 14px;}
+.main-content-left .today-foucs .img{display: inline-block;width:160px;height:93px;}
+.main-content-left .today-foucs .img img{width:160px;height:93px;}
+.main-content-left .today-foucs .text{display: inline-block;width:160px;height:28px;padding-top: 10px;color:#333;}
+
+.near-new ul{overflow: hidden;height:auto;width:180px;}
+.near-new ul li{height:60px;border-bottom: 1px dashed #ccc;}
+.near-new ul li a{font-size:12px;line-height:1.8em; height:40px;padding:10px 0;color:#333;display: inline-block;width:180px;}
+.near-new ul li a:hover{background: #6ad1f0;color:#fff;}
+
+.near-what .list{padding-top:4px;padding-left:24px;height: 220px;overflow: hidden;}
+.near-what p{margin-top: 10px;}
+.near-what p span{background: #e4e4e4;display: inline-block;width:auto;height:18px;font-size:14px;line-height:18px;padding:0 5px; font-weight: bold;}
+.near-what .left,.near-what .right{border:none;width:78px;float: left;}
+.near-what .left{text-align: center;}
+.near-what li{text-align: center;}
+.near-what li a{display: inline-block;text-align: center;width:100%;}
+.near-what .right{text-align: center;}
+.near-what .left a,.near-what .right a{font-size:12px;line-height:42px; color:#333;}
+.near-what .left a:hover,.near-what .right a:hover{color:#06f;}
+
+.center-research-t .title{font-size:12px;line-height:32px; height:32px;color: #333;border-bottom: 1px solid #ccc;font-weight: bold;}
+.center-research-t .title span{background: #e4e4e4;display: inline-block;height:18px;line-height: 18px;font-size:12px;line-height:}
+.center-research-t .center-res-img{display: inline-block;width:610px;height:340px;padding-top: 14px;}
+.center-research-t .center-res-img img{width:610px;height:340px;vertical-align: top;}
+
+.center-article{padding-top: 17px;}
+.center-article h1{font-size:26px;line-height:60px; font-family: "Arial","Microsoft YaHei";font-weight: bold;padding-left:10px;}
+.center-article p{padding:11px 0;font-size:18px;line-height:1.8em; color:#333;}
+.center-article .author{text-align: center;font-size:12px;line-height:52px; color:#333;padding: 0;}
+.center-article .author a{font-size:12px;line-height:52px; color:#333;}
+.center-article .author a:hover{color:#06f;}
+.center-article img{max-width:500px;}
+
+.share-code{padding-top: 18px;width: 100%;}
+.share-code p{font-size:12px;line-height:46px; }
+.share-code p a{font-size:12px;line-height:46px; color: #333;}
+.share-code p a:hover{color:#06f;}
+.share-code img{width:610px;height:30px;padding-bottom: 20px;}
+
+
+.about-article p{font-size:16px;line-height:42px; font-weight: bold;padding: 0;text-indent: 0;}
+.about-article ul{padding-top: 8px;width:610px;height:130px;overflow: hidden;padding-bottom: 23px;}
+.about-article ul li{padding-left: 12px;background: url("http://www.sootoo.com/son_media/t14/img/spirit.png") 0 -1472px no-repeat;}
+.about-article ul li a{font-size:16px;line-height:26px; color:#333;}
+.about-article ul li a:hover{color:#06f;}
+.article-list a{display: inline-block;font-size:16px;line-height:26px; color:#333;}
+
+#baidu_clb_slot_iframe_979260_0{padding-top: 10px;}
+
+.foucs-gz ul{padding-top: 3px;width:300px;}
+#foucs-gz em{padding-right: 10px;font-size: 12px;font-family: "Arial";font-style: italic;font-weight: bold;}
+#foucs-gz ul li a{font-size:12px;line-height:28px; color:#333;display: inline-block;}
+#foucs-gz ul li:hover{background: #ccc;}
+#foucs-gz .Focus_em{padding-right:4px;}
+.foucs-gz p,.famous p{font-size:12px;line-height:36px; height:36px;color: #333;font-weight: bold;background: url("http://www.sootoo.com/son_media/t14/img/spirit.png") right -836px no-repeat;}
+.foucs-gz p span,.xiaoxi-talk p span,.famous p span{background: #e4e4e4;display: inline-block;height:18px;line-height: 18px;font-size:12px;line-height:}
+.xiaoxi-talk p{font-size:12px;line-height:46px; height:46px;color: #333;font-weight: bold;background: url("http://www.sootoo.com/son_media/t14/img/spirit.png") right -831px no-repeat;}
+.xiaoxi-talk img,.famous img{width:300px;height:167px;}
+.famous img{padding-top: 4px;}
+
+	.main-content-r-video{width:100%;height:396px;overflow:hidden;}
+	.video-t{background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) right -807px no-repeat;height:36px;}
+	.video-t a{ display:inline-block;height:18px;color:#333;font:12px/18px "微软雅黑"; padding:0 6px 0 0;font-weight:bold; background:#e4e4e4;margin-top:10px;}
+	.video-b{width:100%;height:88px;overflow:hidden;padding-top:10px;}
+	.video-b p a{ display:inline-block;width:100%;color:#333;font:12px/18px "微软雅黑"; text-align:center;}
+	.video-b-l,.video-b-r{float:left;width:142px;}
+	.video-b-l{padding-right:5px;}
+	.video-b-r{padding-left:5px;}
+	.video-b p{ background:#e4e4e4;height:36px;}
+
+.main-content-r-topic{height:auto;overflow:hidden;}
+.main-content-r-topic .p_d{background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) right -840px no-repeat;height:38px;}
+.main-content-r-topic .p_d a{ display:inline-block;height:18px;color:#333;font-size:12px;line-height:18px;  padding:0 6px 0 0;font-weight:bold; background:#e4e4e4;margin-top:10px;}
+ .foucs-gz .p_d span{display:inline-block;height:18px;color:#333;font-size:12px;line-height:18px;  padding:0 6px 0 0;font-weight:bold; background:#e4e4e4;margin-top:10px;}
+.main-content-r-topic img{padding-bottom:10px;}
+
+.footer{width:1200px;height:361px; background:#222;padding-top:7px;float:left;}
+.footer-ds{color:#ccc;font-size:12px;line-height:48px; border-bottom:1px solid #444;text-align:center;}
+.footer-ds a{padding:0 6px;}
+.footer-cont{padding:14px 0 15px 0;border-bottom:1px solid #444;height:210px;}
+.footer-read,.footer-st,.footer-st1,.footer-partner,.footer-more,.footer-more1,.footer-sec,.footer-four{float:left;display:inline-block;}
+.footer-read,.footer-sec,.footer-partner{border-right:1px solid #444;height:210px;}
+.footer-read,.footer-sec{padding-left:32px;}
+.footer-partner,.footer-four{padding-left:24px;}
+.footer-read{width:220px;}
+.footer-sec{width:324px;}
+.footer-sec span{ font-weight:bold;}
+.footer-partner{width:312px;}
+.footer-four{width:228px;height:210px;}
+.footer-read a,.footer-st a,.footer-st1 a,.footer-partner a,.footer-more a,.footer-more1 a{color:#ccc; display:inline-block;font-size:12px;line-height:28px; }
+.footer-four a{width:88px; text-align:right;}
+.footer-more1,.footer-st1{padding-left:20px;}
+.fetion{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left -124px no-repeat;}
+.friend{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left 4px no-repeat;}
+.q-weibo{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left -993px no-repeat;}
+.q-space{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left 4px no-repeat;}
+.xl-weibo{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left -1023px no-repeat;}
+.rss{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left -1053px no-repeat;}
+.e-mail{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left 4px no-repeat;}
+.search{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left 4px no-repeat;}
+.share{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left 4px no-repeat;}
+.wy-weibo{ background:url(http://www.sootoo.com/son_media/t14/img/spirit.png) left -1084px no-repeat;}
+.footer-head{font-size:12px;line-height:18px; color:#59d8d8;padding-bottom:4px; text-align:left;}
+
+.footer-bottom{width:806px;height:48px;margin:13px auto;padding-left:140px;position: relative;}
+.footer-bottom .research{font-size:12px;line-height:28px; color:#696969;}
+.footer-bottom .research span{color:#ccc;}
+.footer-bottom .danwei{color:#ccc;font-size:12px;line-height:20px; }
+.danwei .hidden{display:none;}
+.bottom-log{display: inline-block;width:120px;height:37px;position: absolute;left:10px;top:0;}
+.footer a:hover{color:#66d9ef;}
+.footer .footer_hide_now{display: none;}
+
+
+
+.left-move{position: absolute;left:-130px;top:336px;width:110px;background:#f2f2f2;}
+.left-move-tex{width:110px;height:212px; text-align:center; font-weight:bold;font-size:16px;line-height:}
+.left-move-tex a{color:#333; display:inline-block;height:36px;font-size:16px;line-height:36px;  font-weight:bold;}
+.left-move-tex dt a{font-size:16px;line-height:68px; height:68px;font-weight:bold;padding-left:20px; background:url(http://www.sootoo.com/son_media/t14/img/u395.png) left 25px no-repeat;}
+.left-move-img{padding-top:2px;width:110px;overflow:hidden;}
+.left-move-img li{padding-top:4px;}
+.left-move-img p{height:36px;font-size:12px;line-height:36px; color:#333; text-align:center;width:110px;}
+.left-move-img .sm{color:#333;}
+
+.header-log-banner-r{display: none;}
+
+#back-top{width: 50px; height: 50px; font-size:50px;font-weight:800; background: #f1f1f1; border: 1px solid #ccc; line-height: 50px; cursor: pointer; position: fixed; _position: absolute; bottom: 10px; right: 10px;}
+
+a:hover{color:#06f;}
+#BAIDU_DUP_wrapper_u1738176_0{padding-top: 30px;margin-top: 10px;}
+.main-content-left .l_img_s span{width:100px;}
+
+#BAIDU_DUP_wrapper_u1730304_0{position: relative;top:26px;left:220px;}
+

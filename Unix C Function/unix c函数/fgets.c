@@ -1,0 +1,28 @@
+
+fgets（由文件中读取一字符串）  
+相关函数  open，fread，fscanf，getc
+#include<stdio.h>
+char *fgets(char * str,int size,FILE * stream);
+----size指定数组str的长度
+----函数说明: fgets()用来从参数stream所指的文件内读入字符并存到参数str所指的内存空间，直到出现换行字符、读到文件尾或是已读了size-1个字符为止，最后会加上NULL作为字符串结束。
+----返回值: 若成功则返回str指针，否则返回NULL并设置errno。(注：函数在执行过程中，出错或遇到文件结束符均返回NULL,所以应使用feof或ferror来检查相应的函数退出状态)
+----函数在stream指定的文件中最多读取size-1个字符，存放在str所指向的数组中遇到文件结束符或回车则提前结束，并在str的最后加上'\0';
+
+
+#include<cstdio>
+#include<cstring>
+#include<iostream>
+using namespace std;
+
+int main(){
+	char str[10];
+	fgets(str,sizeof(str),stdin);  //stdin是标准c的一种文件指针类型
+	int a,b;
+	sscanf(str,"%d %d",&a,&b);
+	cout<<a<<" "<<b<<endl;
+return 0;
+}
+ 
+//1 2 //输入
+//1 2//输出
+

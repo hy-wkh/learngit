@@ -1,0 +1,24 @@
+NAME
+       mq_unlink - remove a message queue
+
+SYNOPSIS(n.概要)
+       #include <mqueue.h>
+       int mq_unlink(const char *name);
+
+       Link with -lrt.
+       ----mq_close只是关闭消息队列，要想从系统中删除用作mq_open第一个参数的某个name,必须调用mq_unlink
+       ----当一个消息队列引用计数仍大于０时，其name可以删除，但是该队列的析构(这与从系统中删除其名字不同)要到最后一个mq_close发生时才进行。
+       ----Posix消息队列至少具备内核的持续性，这就是说，即使当前没有进程打开着某个消息队列，该队列及其上的各个消息也将一直存在，直到调用mq_unlink并让它的引用计数达到０以删除该队列为止。
+       ----返回，０，－１；
+
+DESCRIPTION
+       mq_unlink() removes the specified message queue name.  The message queue
+       name is removed immediately.  The queue itself  is  destroyed  once  any
+       other  processes that have the queue open close their descriptors refer‐
+       ring to the queue.
+
+RETURN VALUE
+       On success mq_unlink() returns 0; on error, -1 is returned,  with  errno
+       set to indicate the error.
+
+----posix消息队列具有随内核的持续性，这就是说，即使当前没有进程打开某个消息队列，该队列及其上的各个消息也将一直存在，直到调用mq_unlink并让它们的引用计数达到０以删除该队列为止。

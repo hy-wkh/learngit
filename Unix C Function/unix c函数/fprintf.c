@@ -1,0 +1,55 @@
+/*
+fprintf（格式化输出数据至文件）
+#include<stdio.h>
+int fprintf(FILE * stream, const char * format,.......);
+----stream为文件指针，指向要输出到的文件中，format为格式字符串，根据格式串中定义的参数来追加后面的参数
+----函数说明 fprintf()会根据参数format字符串来转换并格式化数据，然后将结果输出到参数stream指定的文件中，直到出现字符串结束('\0')为止。
+----返回值: 关于参数format字符串的格式请参考printf()。成功则返回实际输出的字符数，失败则返回-1，错误原因存于errno中。
+*/
+/*#include<stdio.h>
+int main(){
+	int i=150,j=-100;
+	double k=3.14159;
+	fprintf(stdout,"%d %f %x\n",j,k,i);
+return 0;
+}
+*/
+
+#include<stdio.h>
+int main(){
+	int n=30;
+	float f=3.14159;
+	char str[4]="abc";
+	FILE *fp;
+	if((fp=tmpfile())==NULL){
+		perror("fail to tmpfile");
+		return 1;
+	}
+	fprintf(fp,"%d %f %s\n",n,f,str);
+	rewind(fp);
+	fscanf(fp,"%d %f %s",&n,&f,str);
+	printf("%d %f %s\n",n,f,str);
+fclose(fp);
+return 0;
+}
+
+#include<stdio.h>
+#include<fcntl.h>
+int main(){
+	FILE *fp;
+	if((fp=fopen("hah","r+"))<0)perror("fail to fopen");
+	char str[]="***";
+	char str1[]="+++";
+	fprintf(fp,"### %s %s ###\n",str,str1);
+return 0;
+}
+
+
+
+
+
+
+
+
+
+
